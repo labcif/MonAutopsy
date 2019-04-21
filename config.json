@@ -1,0 +1,10 @@
+{
+	"cpu_usage": {
+		"min": "20",
+		"max": "70"
+	},
+	"virtual_memory": {
+		"min": "1000",
+		"max": "5000"
+	}
+}

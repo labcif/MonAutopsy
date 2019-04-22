@@ -6,8 +6,14 @@
 		"min": "20",
 		"max": "70"
 	},
-	"virtual_memory": {
+	"memory": {
 		"min": "1000",
 		"max": "5000"
+	},
+	"notify": {
+		"SMTPServer": "smtp.gmail.com",
+		"senderEmail": "MonAutopsy_Notify@gmail.com",
+		"password": "xpto_ubuntu_123_OMEGALUL",
+		"receiverEmail": "2160840@my.ipleiria.pt"
 	}
 }

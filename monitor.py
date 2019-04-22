@@ -59,13 +59,16 @@ def checkProcesses():
         #diskUsage = 0.0
 
         processesIOCounters = []
+        processesMemoryInfo = []
 
         for proc in processes:
             cpuUsage += proc.cpu_percent() / psutil.cpu_count()
             cpuUsage = round(cpuUsage, 2)
             processesIOCounters.append(proc.io_counters())
+            processesMemoryInfo.append(proc.memory_full_info())
 
-        #Updating the database with 1 record, which is the sum of the fields of the processes
+
+        #Updating the database with 1 record of IO, which is the sum of the IO fields of the processes
 
         totalReadCount = 0
         totalWriteCount = 0
@@ -78,7 +81,7 @@ def checkProcesses():
             totalReadBytes += IOCounter.read_bytes
             totalWriteBytes += IOCounter.write_bytes
             
-        #Call the function to insert the new record in the database here
+        #Call the function to insert the new IO record in the database here
         print("Total read count: " + str(totalReadCount))
         print("Total write count: " + str(totalWriteCount))
         print("Total read bytes: " + str(totalReadBytes))
@@ -97,9 +100,25 @@ def checkProcesses():
                             #print("Disk usage: " + str(diskUsage) + "%")
                             #print("DiskBusyTime: " + str(diskBusyTimeDifference))
 
+        #Updating the database with 1 record of memory, which is the sum of the memory fields of the processes
+
+        totalMemoryUsage = 0
+        totalPageFaults = 0
+
+        for memoryInfo in processesMemoryInfo:
+            totalMemoryUsage += memoryInfo.uss
+            totalPageFaults += memoryInfo.num_page_faults
+
+        #Call the function to insert the new memory record in the database here
+        print("Total memory usage: " + str(totalMemoryUsage))
+        print("Total page faults: " + str(totalPageFaults))
+
+
         # Enviar mail se...
-        #if cpuUsage >= config.cpu_usage.max or cpuUsage <= config.cpu_usage.min:
+        if cpuUsage > int(config["cpu_usage"]["max"], 10) or cpuUsage < int(config["cpu_usage"]["min"], 10) :
             #Send a notif plz
+            print("NOTIFICATION HERE! PLEASE LET ME KNOW VIA EMAIL!")
+
         print("Median CPU Usage for " + str(PROCNAME) + " processes = " + str(cpuUsage) + "%")
         values = (cpuUsage, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         add_cpu_values(values)

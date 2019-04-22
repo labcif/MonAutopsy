@@ -98,10 +98,11 @@ msgImage = MIMEImage(fp.read())
 msgImage.add_header('Content-ID', '<status>')
 message.attach(msgImage)
 
-def send_notif(receiverEmail, password):
+def send_notif(SMTPServer, senderEmail, receiverEmail, password):
 	convertHtmlToPdf(sourceHtml, outputFilename)
-	email = "jcarloslavosoliveira@gmail.com"
-	message["To"] = receiverEmail
-	with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-		server.login(email, password)
-		server.sendmail("noreply@MonAutopsy.pt", receiverEmail, message.as_string())
+
+	#message["To"] = receiverEmail
+
+	with smtplib.SMTP_SSL(SMTPServer, port, context=context) as server:
+		server.login(senderEmail, password)
+		server.sendmail(senderEmail, receiverEmail, message.as_string())

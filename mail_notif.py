@@ -1,6 +1,6 @@
 import smtplib, ssl
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from senderEmail.mime.text import MIMEText
+from senderEmail.mime.multipart import MIMEMultipart
 from xhtml2pdf import pisa
 
 # Define your data
@@ -32,19 +32,22 @@ context = ssl.create_default_context()
 #Subject: Hi there
 #
 #This message is sent from Python."""
+
 file = open("report.html")
 html = file.read()
 message = MIMEMultipart("alternative")
 message["Subject"] = "Periodic Report"
-message["From"] = "noreply@MonAutopsy.pt"
+
+#message["From"] = "noreply@MonAutopsy.pt"
 
 part1 = MIMEText(html, "html")
 message.attach(part1)
 
-def send_notif(receiverEmail, password):
+def send_notif(SMTPServer, senderEmail, receiverEmail, password):
 	convertHtmlToPdf(sourceHtml, outputFilename)
-	email = "jcarloslavosoliveira@gmail.com"
-	message["To"] = receiverEmail
-	with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-		server.login(email, password)
-		server.sendmail("noreply@MonAutopsy.pt", receiverEmail, message.as_string())
+
+	#message["To"] = receiverEmail
+
+	with smtplib.SMTP_SSL(SMTPServer, port, context=context) as server:
+		server.login(senderEmail, password)
+		server.sendmail(senderEmail, receiverEmail, message.as_string())

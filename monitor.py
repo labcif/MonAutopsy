@@ -6,9 +6,14 @@ from database import add_cpu_values
 from graphics import graphData
 import sys
 
+            #Not necessary for the time being:
+                #Variables for disk monitorization
+                #previousDiskBusyTime = psutil.disk_io_counters().read_time + psutil.disk_io_counters().write_time
+                #print(str(previousDiskBusyTime))
+
 #Load JSON File
-with open(os.path.dirname(__file__) + '\\config.json') as f:
-	config = json.load(f)
+with open(os.path.dirname(os.path.abspath(__file__)) + '\\config.json') as f:
+    config = json.load(f)
 
 #Usar 'config' para definir todos os intervalos de valores a monitorizar
 
@@ -40,15 +45,54 @@ def checkProcesses():
     try:
         thread = threading.Timer(1.0, checkProcesses)
         thread.start()
-        usage = 0.0
+        
+        cpuUsage = 0.0
+        #diskUsage = 0.0
+
+        processesIOCounters = []
+
         for proc in processes:
-            usage += proc.cpu_percent() / psutil.cpu_count()
-            usage = round(usage, 2)
+            cpuUsage += proc.cpu_percent() / psutil.cpu_count()
+            cpuUsage = round(cpuUsage, 2)
+            processesIOCounters.append(proc.io_counters())
+
+        #Updating the database with 1 record, which is the sum of the fields of the processes
+
+        totalReadCount = 0
+        totalWriteCount = 0
+        totalReadBytes = 0
+        totalWriteBytes = 0
+
+        for IOCounter in processesIOCounters:
+            totalReadCount += IOCounter.read_count
+            totalWriteCount += IOCounter.write_count
+            totalReadBytes += IOCounter.read_bytes
+            totalWriteBytes += IOCounter.write_bytes
+            
+        #Call the function to insert the new record in the database here
+        print("Total read count: " + str(totalReadCount))
+        print("Total write count: " + str(totalWriteCount))
+        print("Total read bytes: " + str(totalReadBytes))
+        print("Total write bytes: " + str(totalWriteBytes))
+
+                        #Not working as expected:
+                            #In milliseconds (supposedly, might be in nanoseconds)
+                            #diskIOCounters = psutil.disk_io_counters()
+                            #global previousDiskBusyTime
+
+                            #diskBusyTime = diskIOCounters.read_time + diskIOCounters.write_time
+                            #diskUsage = round((diskBusyTime - previousDiskBusyTime) / 1000 * 100,  5)
+                            #diskBusyTimeDifference = diskBusyTime - previousDiskBusyTime
+                            #previousDiskBusyTime = diskBusyTime
+
+                            #print("Disk usage: " + str(diskUsage) + "%")
+                            #print("DiskBusyTime: " + str(diskBusyTimeDifference))
+
         # Enviar mail se...
-        if usage > config.cpu_usage.max or usage < config.cpu_usage.min :
+        if cpuUsage > config.cpu_usage.max or cpuUsage < config.cpu_usage.min :
             #Send a notif plz
-        print("Median CPU Usage for " + str(PROCNAME) + " processes = " + str(usage) + "%")
-        values = (usage, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        print("Median CPU Usage for " + str(PROCNAME) + " processes = " + str(cpuUsage) + "%")
+        values = (cpuUsage, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         add_cpu_values(values)
     except psutil.NoSuchProcess:
         for proc in processes:

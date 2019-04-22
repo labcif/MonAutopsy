@@ -1,4 +1,7 @@
 {
+	"report": {
+		"time_interval": "10"
+	},
 	"cpu_usage": {
 		"min": "20",
 		"max": "70"

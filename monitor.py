@@ -45,7 +45,8 @@ def checkProcesses():
             usage += proc.cpu_percent() / psutil.cpu_count()
             usage = round(usage, 2)
         # Enviar mail se...
-        # if(usage > ... || usage < ...):
+        if usage > config.cpu_usage.max or usage < config.cpu_usage.min :
+            #Send a notif plz
         print("Median CPU Usage for " + str(PROCNAME) + " processes = " + str(usage) + "%")
         values = (usage, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         add_cpu_values(values)
@@ -66,6 +67,10 @@ def createGraphic():
 	global i
 	i += 1
 	graphData(str(PROCNAME), "test_" + str(i))
+
+
+def periodicReport():
+
 
 def main():
 	checkProcesses()

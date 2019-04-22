@@ -41,10 +41,19 @@ for _ in range(psutil.cpu_count()):
 
 print()
 
+#-----------------------
+
+processesThread = None
+chartsThread = None
+reportThread = None
+
+
 def checkProcesses():
+    global processesThread
     try:
-        thread = threading.Timer(1.0, checkProcesses)
-        thread.start()
+        processesThread = threading.Timer(1.0, checkProcesses) #mudar para parametro JSON
+        processesThread.start()
+        #thread.start()
         
         cpuUsage = 0.0
         #diskUsage = 0.0
@@ -89,7 +98,7 @@ def checkProcesses():
                             #print("DiskBusyTime: " + str(diskBusyTimeDifference))
 
         # Enviar mail se...
-        if cpuUsage > config.cpu_usage.max or cpuUsage < config.cpu_usage.min :
+        #if cpuUsage >= config.cpu_usage.max or cpuUsage <= config.cpu_usage.min:
             #Send a notif plz
         print("Median CPU Usage for " + str(PROCNAME) + " processes = " + str(cpuUsage) + "%")
         values = (cpuUsage, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -102,7 +111,8 @@ def checkProcesses():
         # Se todos os processos terminados
         if len(processes) == 0 :
             print("All processes are dead!!!")
-            thread.cancel()
+            #thread.cancel()
+            processesThread.cancel()
             #Notificacao ao admin
 
 i = 0
@@ -113,7 +123,7 @@ def createGraphic():
 	graphData(str(PROCNAME), "test_" + str(i))
 
 
-def periodicReport():
+#def periodicReport():
 
 
 def main():

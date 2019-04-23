@@ -2,26 +2,6 @@ import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
-from xhtml2pdf import pisa
-import base64
-
-# Define your data
-sourceHtml = "report.html"
-outputFilename = "report.pdf"
-
-# Utility function
-def convertHtmlToPdf(sourceHtml, outputFilename):
-    # open output file for writing (truncated binary)
-    resultFile = open(outputFilename, "w+b")
-
-    # convert HTML to PDF
-    pisaStatus = pisa.CreatePDF(open(sourceHtml).read(), resultFile)
-
-    # close output file
-    resultFile.close()
-
-    # return True on success and False on errors
-    return pisaStatus.err
 
 
 
@@ -75,34 +55,30 @@ message.attach(msgAlternative)
 part1 = MIMEText(html, "html")
 msgAlternative.attach(part1)
 
-fp = open("test_1.jpg", "rb")
+fp = open("cpu_graph.jpg", "rb")
 msgImage = MIMEImage(fp.read())
 msgImage.add_header('Content-ID', '<cpu>')
 message.attach(msgImage)
 
 
-fp = open("test_2.jpg", "rb")
+fp = open("io_graph.jpg", "rb")
 msgImage = MIMEImage(fp.read())
 msgImage.add_header('Content-ID', '<io>')
 message.attach(msgImage)
 
 
-fp = open("test_1.jpg", "rb")
+fp = open("memory_graph.jpg", "rb")
 msgImage = MIMEImage(fp.read())
 msgImage.add_header('Content-ID', '<memory>')
 message.attach(msgImage)
 
 
-fp = open("test_1.jpg", "rb")
+fp = open("screenshot.jpg", "rb")
 msgImage = MIMEImage(fp.read())
 msgImage.add_header('Content-ID', '<status>')
 message.attach(msgImage)
 
 def send_notif(SMTPServer, senderEmail, receiverEmail, password):
-	convertHtmlToPdf(sourceHtml, outputFilename)
-
-	#message["To"] = receiverEmail
-
 	with smtplib.SMTP_SSL(SMTPServer, port, context=context) as server:
 		server.login(senderEmail, password)
 		server.sendmail(senderEmail, receiverEmail, message.as_string())

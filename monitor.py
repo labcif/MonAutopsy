@@ -3,8 +3,9 @@
 import psutil, threading, mail_notif, json, datetime, os
 from arguments import arguments
 from database import add_cpu_values
-from graphics import graphData
-import sys
+from graphics import cpuGraph
+from mail_notif import send_notif
+import sysconfig
 
             #Not necessary for the time being:
                 #Variables for disk monitorization
@@ -53,7 +54,6 @@ def checkProcesses():
     try:
         processesThread = threading.Timer(1.0, checkProcesses) #mudar para parametro JSON
         processesThread.start()
-        #thread.start()
         
         cpuUsage = 0.0
         #diskUsage = 0.0
@@ -113,7 +113,6 @@ def checkProcesses():
         print("Total memory usage: " + str(totalMemoryUsage))
         print("Total page faults: " + str(totalPageFaults))
 
-
         # Enviar mail se...
         if cpuUsage > int(config["cpu_usage"]["max"], 10) or cpuUsage < int(config["cpu_usage"]["min"], 10) :
             #Send a notif plz
@@ -130,19 +129,22 @@ def checkProcesses():
         # Se todos os processos terminados
         if len(processes) == 0 :
             print("All processes are dead!!!")
-            #thread.cancel()
             processesThread.cancel()
             #Notificacao ao admin
 
 i = 0
 def createGraphic():
-	threading.Timer(5.0, createGraphic).start()
 	global i
 	i += 1
-	graphData(str(PROCNAME), "test_" + str(i))
+	cpuGraph(str(PROCNAME), "cpu_graph" + str(i))
 
 
-#def periodicReport():
+def periodicReport():
+    global reportThread
+    reportThread = threading.Timer(config["notify"]["report"], periodicReport)
+    reportThread.start()
+    createGraphic()
+    send_notif(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], config["notify"]["receiverEmail"], config["notify"]["password"])
 
 
 def main():

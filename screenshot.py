@@ -24,7 +24,6 @@ def foreach_window(hwnd, lParam):
 
 EnumWindows(EnumWindowsProc(foreach_window), 0)
 
-
 if wantedWindow is not None:
     autoit.win_activate(wantedWindow)
     autoit.win_set_state(wantedWindow, flag=3)

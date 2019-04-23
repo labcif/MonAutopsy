@@ -83,9 +83,9 @@ def create_table(conn, create_table_sql):
 if __name__ == "__main__":
 	main()
 
-#-------------------------------
+#-------------------------------MODULE PART--------------------------------
 
-#ADDING VALUES TO TABLES (MODULE PART)
+#ADDING VALUES TO TABLES
 def add_cpu_values(values):
 	conn = create_connection(database)
 	sql_update_cpu = '''INSERT INTO cpu(cpu_usage,date_time) VALUES(?,?)'''
@@ -95,6 +95,8 @@ def add_cpu_values(values):
 	except sqlite3.Error as e:
 		print(e)
 
+
+#RETRIEVING VALUES FROM TABLES
 def retrieve_cpu_values():
 	conn = create_connection(database)
 	try:
@@ -115,3 +117,9 @@ def retrieve_latest_cpu_values():
 		return rows
 	except sqlite3.Error as e:
 		print(e)
+
+def retrieve_memory_values():
+	conn = create_connection(database)
+	#try:
+		#c = conn.cursor()
+		#c.execute('''(SELECT ''')

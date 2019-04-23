@@ -1,7 +1,4 @@
 {
-	"report": {
-		"time_interval": "10"
-	},
 	"cpu_usage": {
 		"min": "20",
 		"max": "70"
@@ -15,5 +12,9 @@
 		"senderEmail": "MonAutopsy_Notify@gmail.com",
 		"password": "xpto_ubuntu_123_OMEGALUL",
 		"receiverEmail": "2160840@my.ipleiria.pt"
+	},
+	"time_interval":{
+		"process": "5",
+		"report": "2600"
 	}
 }

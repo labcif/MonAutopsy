@@ -176,6 +176,7 @@ def periodicReport():
 #CPU, IO and memory charts creation
 def createGraphic():
     cpuGraph(str(PROCNAME), "cpu_graph")
+    #TODO: Add IO and memory charts
 
 
 #Upon starting the script will begin the monitorization and period report cicle

@@ -1,5 +1,5 @@
-import sqlite3, os
-dirname = os.path.dirname(__file__)
+import sqlite3, os, time
+dirname = os.path.dirname(os.path.abspath(__file__))
 databaseDir = dirname + "\\database"
 database = dirname + "\\database\\database.db"
 
@@ -9,15 +9,15 @@ def createTables():
 	sql_create_jobs_table = '''CREATE TABLE IF NOT EXISTS jobs
 							(
 								id INTEGER PRIMARY KEY AUTOINCREMENT,
-								start_time TEXT NOT NULL,
-								finish_time TEXT NOT NULL
+								start_time INTEGER NOT NULL,
+								finish_time INTEGER NOT NULL
 							)'''
 
 	sql_create_updates_table = '''CREATE TABLE IF NOT EXISTS updates
 							(
 								id INTEGER PRIMARY KEY AUTOINCREMENT,
 								job_id INTEGER NOT NULL,
-								timedate TEXT NOT NULL,
+								timedate INTEGER NOT NULL,
 								FOREIGN KEY(job_id) REFERENCES jobs(id)
 							)'''
 
@@ -25,10 +25,10 @@ def createTables():
 							(
 								id INTEGER PRIMARY KEY,
 								usage_percentage REAL NOT NULL,
-								affinity INTEGER NOT NULL,
+								num_cores INTEGER NOT NULL,
 								threads INTEGER NOT NULL,
-								cpu_time REAL NOT NULL,
-								idle_time REAL NOT NULL,
+								cpu_time INTEGER NOT NULL,
+								idle_time INTEGER NOT NULL,
 								FOREIGN KEY(id) REFERENCES updates(id)
 							)'''
 
@@ -82,15 +82,88 @@ def create_table(conn, create_table_sql):
 #-------------------------------ADD AND RETRIEVE VALUES FROM DATABASE--------------------------------
 
 #ADDING VALUES TO TABLES
-def add_cpu_values(values):
+def add_jobs_record():
+	start_time = time.time()
+
 	conn = create_connection(database)
-	sql_update_cpu = '''INSERT INTO cpu(cpu_usage,date_time) VALUES(?,?)'''
+	sqlCommand = '''INSERT INTO jobs(start_time) VALUES(?)'''
+
 	try:
 		with conn:
-			conn.execute(sql_update_cpu, values)
+			conn.execute(sqlCommand, start_time)
 	except sqlite3.Error as e:
 		print(e)
 
+
+def update_jobs_record():
+	finish_time = time.time()
+
+	conn = create_connection(database)
+	sqlCommand = '''UPDATE jobs SET finish_time = ? WHERE id = (SELECT MAX(id) FROM jobs)'''
+
+	try:
+		with conn:
+			conn.execute(sqlCommand, finish_time)
+	except sqlite3.Error as e:
+		print(e)
+
+
+def add_updates_record(cpu_record, IO_record, memory_record):
+	update_time = time.time()
+
+	conn = create_connection(database)
+	sqlCommand = '''INSERT INTO updates(job_id, update_time) VALUES((SELECT MAX(id) FROM jobs),?)'''
+
+	lastRowId = -1
+
+	try:
+		with conn:
+			conn.execute(sqlCommand, update_time)
+			lastRowId = conn.lastrowid
+
+		add_cpu_record(lastRowId, cpu_record)
+		add_IO_record(lastRowId, IO_record)
+		add_memory_record(lastRowId, memory_record)
+	except sqlite3.Error as e:
+		print(e)
+
+def add_cpu_record(id, record):
+	record = id + record
+
+	conn = create_connection(database)
+	sqlCommand = '''INSERT INTO cpu(id, usage_percentage, num_cores, threads, cpu_time, idle_time) VALUES(?,?,?,?,?,?)'''
+
+	try:
+		with conn:
+			conn.execute(sqlCommand, record)
+	except sqlite3.Error as e:
+		print(e)
+
+
+def add_IO_record(id, record):
+	record = id + record
+
+	conn = create_connection(database)
+	sqlCommand = '''INSERT INTO IO(id, read_count, write_count, read_bytes, write_bytes) VALUES(?,?,?,?,?)'''
+
+	try:
+		with conn:
+			conn.execute(sqlCommand, record)
+	except sqlite3.Error as e:
+		print(e)
+
+
+def add_memory_record(id, record):
+	record = id + record
+
+	conn = create_connection(database)
+	sqlCommand = '''INSERT INTO memory(id, memory_usage, page_faults) VALUES(?,?,?)'''
+
+	try:
+		with conn:
+			conn.execute(sqlCommand, record)
+	except sqlite3.Error as e:
+		print(e)
 
 #RETRIEVING VALUES FROM TABLES
 def retrieve_cpu_values():

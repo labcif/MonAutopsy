@@ -5,6 +5,7 @@ import psutil, threading, mail_notif, json, datetime, os
 from database import add_cpu_values, createTables
 from graphics import cpuGraph
 from mail_notif import send_notif
+from time import time
 from time import sleep
 import sysconfig
 
@@ -16,16 +17,21 @@ import sysconfig
 #Load JSON File
 with open(os.path.dirname(os.path.abspath(__file__)) + '\\config.json') as f:
     config = json.load(f)
+    #TODO: JSON parameter validation
+
+#SMTP Password
+smtp_password = input("Enter SMTP password: ")
+
 
 #Usar 'config' para definir todos os intervalos de valores a monitorizar
 
 #All processes
-print("\nAll processes CPU Times:\n")
+print("All processes CPU Times:\n")
 print(psutil.cpu_times())
 print("\n-----------------------\n\nAll processes virtual memory:\n")
 print(psutil.virtual_memory())
 
-#Selected process monitorization (process passed as an argument, ex: 'python monitor.py -p chrome.exe')
+#Selected process monitorization
 PROCNAME = "autopsy64.exe"
 print("\n-----------------------\n\nProcess: " + str(PROCNAME))
 print("\nCPU PERCENT")
@@ -135,8 +141,10 @@ def checkProcesses():
         print("Median CPU Usage for " + str(PROCNAME) + " processes = " + str(cpuUsage) + "%")
 
         #Add CPU information to database
-        values = (cpuUsage, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        add_cpu_values(values)
+        #TODO: Check affinity and threads for autopsy and photorek and join them (hardcoded for now)
+        #---WAITING FOR DATABASE METHODS---
+        #values = (cpuUsage, ..., ..., ..., ..., ...)
+        #add_cpu_values(values)
 
     except psutil.NoSuchProcess:
         for proc in processes:
@@ -162,12 +170,11 @@ def periodicReport():
     global reportThread
     #Define and start cicle
     reportThread = threading.Timer(int(config["time_interval"]["report"]), periodicReport)
-    #TODO: Check if database has values for the charts
     reportThread.start()
 
     #Call charts creation and send them in the notifications
     createGraphic()
-    send_notif(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], config["notify"]["receiverEmail"], config["notify"]["password"])
+    send_notif(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], config["notify"]["receiverEmail"], smtp_password)
 
 
 #Upon starting the script will begin the monitorization and period report cicle

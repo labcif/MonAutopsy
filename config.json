@@ -10,11 +10,10 @@
 	"notify": {
 		"SMTPServer": "smtp.gmail.com",
 		"senderEmail": "MonAutopsy_Notify@gmail.com",
-		"password": "xpto_ubuntu_123_OMEGALUL",
 		"receiverEmail": "2160840@my.ipleiria.pt"
 	},
 	"time_interval":{
 		"process": "5",
-		"report": "2600"
+		"report": "5"
 	}
 }

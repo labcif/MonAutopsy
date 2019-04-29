@@ -83,7 +83,7 @@ def create_table(conn, create_table_sql):
 
 #ADDING VALUES TO TABLES
 def add_jobs_record():
-	start_time = (time.time(),)
+	start_time = (int(time.time()),)
 
 	conn = create_connection(database)
 	c = conn.cursor()
@@ -97,7 +97,7 @@ def add_jobs_record():
 
 
 def update_jobs_record():
-	finish_time = (time.time(),)
+	finish_time = (int(time.time()),)
 
 	conn = create_connection(database)
 	c = conn.cursor()
@@ -111,7 +111,7 @@ def update_jobs_record():
 
 
 def add_updates_record(cpu_record, IO_record, memory_record):
-	update_time = (time.time(),)
+	update_time = (int(time.time()),)
 
 	conn = create_connection(database)
 	c = conn.cursor()

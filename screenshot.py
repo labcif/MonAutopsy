@@ -8,8 +8,6 @@ GetWindowText = ctypes.windll.user32.GetWindowTextW
 GetWindowTextLength = ctypes.windll.user32.GetWindowTextLengthW
 IsWindowVisible = ctypes.windll.user32.IsWindowVisible
 
-wantedWindow = None
-
 
 def foreach_window(hwnd, lParam):
     global wantedWindow

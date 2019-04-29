@@ -2,10 +2,10 @@
 import argparse
 import sys
 
-parser = argparse.ArgumentParser(description = "Monitor parsed processes.")
-parser.add_argument("-p", "--process", help="Process name to monitor")
-if(len(sys.argv) == 1):
-	parser.print_help()
-	exit(2)
+#parser = argparse.ArgumentParser(description = "Monitor parsed processes.")
+#parser.add_argument("-p", "--process", help="Process name to monitor")
+#if(len(sys.argv) == 1):
+#	parser.print_help()
+#	exit(2)
 
-arguments = parser.parse_args()
+#arguments = parser.parse_args()

@@ -55,30 +55,29 @@ message.attach(msgAlternative)
 part1 = MIMEText(html, "html")
 msgAlternative.attach(part1)
 
-fp = open("cpu_graph.jpg", "rb")
-msgImage = MIMEImage(fp.read())
-msgImage.add_header('Content-ID', '<cpu>')
-message.attach(msgImage)
+def addImages():
+	fp = open("cpu_graph.png", "rb")
+	msgImage = MIMEImage(fp.read())
+	msgImage.add_header('Content-ID', '<cpu>')
+	message.attach(msgImage)
 
+	fp = open("io_graph.jpg", "rb")
+	msgImage = MIMEImage(fp.read())
+	msgImage.add_header('Content-ID', '<io>')
+	message.attach(msgImage)
 
-fp = open("io_graph.jpg", "rb")
-msgImage = MIMEImage(fp.read())
-msgImage.add_header('Content-ID', '<io>')
-message.attach(msgImage)
+	fp = open("memory_graph.jpg", "rb")
+	msgImage = MIMEImage(fp.read())
+	msgImage.add_header('Content-ID', '<memory>')
+	message.attach(msgImage)
 
-
-fp = open("memory_graph.jpg", "rb")
-msgImage = MIMEImage(fp.read())
-msgImage.add_header('Content-ID', '<memory>')
-message.attach(msgImage)
-
-
-fp = open("screenshot.jpg", "rb")
-msgImage = MIMEImage(fp.read())
-msgImage.add_header('Content-ID', '<status>')
-message.attach(msgImage)
+	fp = open("screenshot.jpg", "rb")
+	msgImage = MIMEImage(fp.read())
+	msgImage.add_header('Content-ID', '<status>')
+	message.attach(msgImage)
 
 def send_notif(SMTPServer, senderEmail, receiverEmail, password):
+	addImages()
 	with smtplib.SMTP_SSL(SMTPServer, port, context=context) as server:
 		server.login(senderEmail, password)
 		server.sendmail(senderEmail, receiverEmail, message.as_string())

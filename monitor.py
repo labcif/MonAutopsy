@@ -1,10 +1,11 @@
 #PSUtil doc: https://psutil.readthedocs.io/en/latest/
 #threading doc: https://docs.python.org/2/library/threading.html
 import psutil, threading, mail_notif, json, datetime, os
-from arguments import arguments
-from database import add_cpu_values
+#from arguments import arguments
+from database import add_cpu_values, createTables
 from graphics import cpuGraph
 from mail_notif import send_notif
+from time import sleep
 import sysconfig
 
             #Not necessary for the time being:
@@ -25,10 +26,12 @@ print("\n-----------------------\n\nAll processes virtual memory:\n")
 print(psutil.virtual_memory())
 
 #Selected process monitorization (process passed as an argument, ex: 'python monitor.py -p chrome.exe')
-PROCNAME = arguments.process
+PROCNAME = "autopsy64.exe"
 print("\n-----------------------\n\nProcess: " + str(PROCNAME))
 print("\nCPU PERCENT")
 processes = []
+
+#Check if process(es) exist and get them in an array
 for proc in psutil.process_iter():
 	if proc.name() == PROCNAME:
 		processes.append(proc)
@@ -36,6 +39,12 @@ if len(processes) == 0 :
 	print("No process named "+str(PROCNAME))
 	exit(2)
 
+
+#Create database tables
+createTables()
+
+
+#Overall CPU percentage
 cpus_percent = psutil.cpu_percent(percpu=True)
 for _ in range(psutil.cpu_count()):
     print("%-10s" % cpus_percent.pop(0), end="")
@@ -44,15 +53,18 @@ print()
 
 #-----------------------
 
+
+#Threads declarations
 processesThread = None
 chartsThread = None
 reportThread = None
 
 
+#Process(es) monitorization
 def checkProcesses():
     global processesThread
     try:
-        processesThread = threading.Timer(1.0, checkProcesses) #mudar para parametro JSON
+        processesThread = threading.Timer(int(config["time_interval"]["process"]), checkProcesses) #mudar para parametro JSON
         processesThread.start()
         
         cpuUsage = 0.0
@@ -113,44 +125,57 @@ def checkProcesses():
         print("Total memory usage: " + str(totalMemoryUsage))
         print("Total page faults: " + str(totalPageFaults))
 
-        # Enviar mail se...
+        # Send mail if...
         if cpuUsage > int(config["cpu_usage"]["max"], 10) or cpuUsage < int(config["cpu_usage"]["min"], 10) :
-            #Send a notif plz
+            #TODO: Create CPU usage anomaly and call it here
             print("NOTIFICATION HERE! PLEASE LET ME KNOW VIA EMAIL!")
 
+        #TODO: Create IO and memory anomaly notification and call it here
+
         print("Median CPU Usage for " + str(PROCNAME) + " processes = " + str(cpuUsage) + "%")
+
+        #Add CPU information to database
         values = (cpuUsage, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         add_cpu_values(values)
+
     except psutil.NoSuchProcess:
         for proc in processes:
-            # Remover todos os processos terminados
+
+            #Remove processes not running anymore
             if not proc.is_running():
                 processes.remove(proc)
-        # Se todos os processos terminados
+
+        #If there are no remaining processes
         if len(processes) == 0 :
             print("All processes are dead!!!")
             processesThread.cancel()
             #Notificacao ao admin
 
-i = 0
+
+#CPU, IO and memory charts creation
 def createGraphic():
-	global i
-	i += 1
-	cpuGraph(str(PROCNAME), "cpu_graph" + str(i))
+	cpuGraph(str(PROCNAME), "cpu_graph")
 
 
+#Periodic report creation
 def periodicReport():
     global reportThread
-    reportThread = threading.Timer(config["notify"]["report"], periodicReport)
+    #Define and start cicle
+    reportThread = threading.Timer(int(config["time_interval"]["report"]), periodicReport)
+    #TODO: Check if database has values for the charts
     reportThread.start()
+
+    #Call charts creation and send them in the notifications
     createGraphic()
     send_notif(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], config["notify"]["receiverEmail"], config["notify"]["password"])
 
 
+#Upon starting the script will begin the monitorization and period report cicle
 def main():
 	checkProcesses()
-	createGraphic()
+	periodicReport()
 
 
+#EXECUTION
 if __name__ == '__main__':
 	main()

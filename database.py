@@ -1,12 +1,10 @@
 import sqlite3, os
-
 dirname = os.path.dirname(__file__)
+databaseDir = dirname + "\\database"
 database = dirname + "\\database\\database.db"
 
-#------------DATABASE/TABLES CREATION (EXECUTION)------------
-def main():
-	dirname = os.path.dirname(__file__)
-	database = dirname + "\\database\\database.db"
+#------------DATABASE/TABLES CREATION------------
+def createTables():
 
 	sql_create_jobs_table = '''CREATE TABLE IF NOT EXISTS jobs
 							(
@@ -63,14 +61,16 @@ def main():
 		print("Error! cannot create a database connection")
 
 
-def create_connection(db_file): 
-    try:
-        conn = sqlite3.connect(db_file)
-        return conn
-    except sqlite3.Error as e:
-        print(e)
- 
-    return None
+def create_connection(db_file):
+	try:
+		if os.path.isdir(databaseDir) is not True:
+			os.mkdir(databaseDir)
+		conn = sqlite3.connect(db_file)
+		return conn
+	except sqlite3.Error as e:
+		print(e)
+
+	return None
 
 def create_table(conn, create_table_sql):
     try:
@@ -79,11 +79,7 @@ def create_table(conn, create_table_sql):
     except sqlite3.Error as e:
         print(e)
 
-#EXECUTION
-if __name__ == "__main__":
-	main()
-
-#-------------------------------MODULE PART--------------------------------
+#-------------------------------ADD AND RETRIEVE VALUES FROM DATABASE--------------------------------
 
 #ADDING VALUES TO TABLES
 def add_cpu_values(values):
@@ -123,3 +119,10 @@ def retrieve_memory_values():
 	#try:
 		#c = conn.cursor()
 		#c.execute('''(SELECT ''')
+
+
+def retrieve_io_values():
+	conn = create_connection(database)
+	#try:
+	#	c = conn.cursor()
+	#	c.execute('''SELECT * FROM IO''')

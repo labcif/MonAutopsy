@@ -29,17 +29,17 @@ print("\n-----------------------\n\nAll processes virtual memory:\n")
 print(psutil.virtual_memory())
 
 #Selected process monitorization
-PROCNAME = ["autopsy64.exe", "photorec_win.exe"]
+PROCNAME = ["autopsy64.exe"]
 #TODO: Change to autopsy64.exe children
 print("\n-----------------------\n\nProcess: " + str(PROCNAME))
 print("\nCPU PERCENT")
-processes = []
+mainProcess = None
 
 #Check if process(es) exist and get them in an array
 for proc in psutil.process_iter():
 	if proc.name() in PROCNAME:
-		processes.append(proc)
-if len(processes) == 0 :
+		mainProcess = proc
+if mainProcess == None :
 	print("No process named "+str(PROCNAME))
 	exit(2)
 
@@ -72,15 +72,35 @@ def checkProcesses():
         cpuUsage = 0.0
         #diskUsage = 0.0
 
+        processesCPUTimes = []
+        processesCPUAfinnity = set() #Unique values only
         processesIOCounters = []
         processesMemoryInfo = []
+        totalThreads = 0
+
+        processes = mainProcess.children(recursive=True) #Get all processes descendants
+        processes.append(mainProcess)
 
         for proc in processes:
             cpuUsage += proc.cpu_percent() / psutil.cpu_count()
             cpuUsage = round(cpuUsage, 2)
+
+            totalThreads += proc.num_threads()
+
+            processesCPUAfinnity.add(proc.cpu_affinity())
+
+            processesCPUTimes.append(proc.cpu_times())
             processesIOCounters.append(proc.io_counters())
             processesMemoryInfo.append(proc.memory_full_info())
 
+
+
+        #Getting 1 record of cpu, which is the sum of the cpu fields of the processes
+
+        processesNumCores = len(processesCPUAfinnity)
+        totalUserTime = 0
+        totalSystemTime = 0
+        totalIdleTime = 0
 
         #Updating the database with 1 record of IO, which is the sum of the IO fields of the processes
 

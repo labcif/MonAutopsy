@@ -2,7 +2,7 @@
 #threading doc: https://docs.python.org/2/library/threading.html
 import psutil, threading, mail_notif, json, datetime, os
 #from arguments import arguments
-from database import add_cpu_record, add_IO_record, add_memory_record, createTables
+from database import add_jobs_record, update_jobs_record, add_updates_record, createTables
 from graphics import cpuGraph
 from mail_notif import send_notif, check_authentication
 
@@ -39,12 +39,13 @@ mainProcess = None
 for proc in psutil.process_iter():
 	if proc.name() in PROCNAME:
 		mainProcess = proc
-if mainProcess == None :
+if mainProcess is None :
 	print("No process named "+str(PROCNAME))
 	exit(2)
 
 #Create database tables
 createTables()
+add_jobs_record()
 
 
 #Overall CPU percentage
@@ -87,7 +88,7 @@ def checkProcesses():
 
             totalThreads += proc.num_threads()
 
-            processesCPUAfinnity.add(proc.cpu_affinity())
+            processesCPUAfinnity.update(proc.cpu_affinity())
 
             processesCPUTimes.append(proc.cpu_times())
             processesIOCounters.append(proc.io_counters())
@@ -100,9 +101,17 @@ def checkProcesses():
         processesNumCores = len(processesCPUAfinnity)
         totalUserTime = 0
         totalSystemTime = 0
-        totalIdleTime = 0
+        #totalIdleTime = 0
 
-        #Updating the database with 1 record of IO, which is the sum of the IO fields of the processes
+        for CPUTimes in processesCPUTimes:
+            totalUserTime += CPUTimes.user
+            totalSystemTime += CPUTimes.system
+
+        totalCPUTime = totalUserTime + totalSystemTime
+
+        cpuRecord = (cpuUsage, processesNumCores, totalThreads, totalCPUTime, 0)
+
+        #Getting 1 record of IO, which is the sum of the IO fields of the processes
 
         totalReadCount = 0
         totalWriteCount = 0
@@ -114,12 +123,15 @@ def checkProcesses():
             totalWriteCount += IOCounter.write_count
             totalReadBytes += IOCounter.read_bytes
             totalWriteBytes += IOCounter.write_bytes
-            
+        
+
+        IORecord = (totalReadCount, totalWriteCount, totalReadBytes, totalWriteBytes)
+
+
         #print("Total read count: " + str(totalReadCount))
         #print("Total write count: " + str(totalWriteCount))
         #print("Total read bytes: " + str(totalReadBytes))
         #print("Total write bytes: " + str(totalWriteBytes))
-
 
 
                         #Not working as expected:
@@ -135,7 +147,7 @@ def checkProcesses():
                             #print("Disk usage: " + str(diskUsage) + "%")
                             #print("DiskBusyTime: " + str(diskBusyTimeDifference))
 
-        #Updating the database with 1 record of memory, which is the sum of the memory fields of the processes
+        #Getting 1 record of memory, which is the sum of the memory fields of the processes
 
         totalMemoryUsage = 0
         totalPageFaults = 0
@@ -144,14 +156,14 @@ def checkProcesses():
             totalMemoryUsage += memoryInfo.uss
             totalPageFaults += memoryInfo.num_page_faults
 
+        memoryRecord = (totalMemoryUsage, totalPageFaults)
+
         #print("Total memory usage: " + str(totalMemoryUsage))
         #print("Total page faults: " + str(totalPageFaults))
 
-        #Add CPU information to database
-        #TODO: Check affinity and threads for autopsy and photorek and join them (hardcoded for now)
-        #---WAITING FOR DATABASE METHODS---
-        #values = (cpuUsage, ..., ..., ..., ..., ...)
-        #add_cpu_values(values)
+        #Add all the records to the database
+
+        add_updates_record(cpuRecord, IORecord, memoryRecord)
 
         # Send mail if...
         if cpuUsage > int(config["cpu_usage"]["max"], 10) or cpuUsage < int(config["cpu_usage"]["min"], 10) :
@@ -173,7 +185,11 @@ def checkProcesses():
         if len(processes) == 0 :
             print("All processes are dead!!!")
             stopThreads()
+            update_jobs_record()
             #Notificacao ao admin
+    except KeyboardInterrupt:
+        stopThreads()
+        update_jobs_record()
 
 
 def stopThreads():
@@ -202,7 +218,7 @@ def createGraphic():
 #Upon starting the script will begin the monitorization and period report cicle
 def main():
 	checkProcesses()
-	periodicReport()
+	#periodicReport()
 
 
 #EXECUTION

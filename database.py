@@ -10,14 +10,14 @@ def createTables():
 							(
 								id INTEGER PRIMARY KEY AUTOINCREMENT,
 								start_time INTEGER NOT NULL,
-								finish_time INTEGER NOT NULL
+								finish_time INTEGER
 							)'''
 
 	sql_create_updates_table = '''CREATE TABLE IF NOT EXISTS updates
 							(
 								id INTEGER PRIMARY KEY AUTOINCREMENT,
 								job_id INTEGER NOT NULL,
-								timedate INTEGER NOT NULL,
+								update_time INTEGER NOT NULL,
 								FOREIGN KEY(job_id) REFERENCES jobs(id)
 							)'''
 
@@ -86,11 +86,12 @@ def add_jobs_record():
 	start_time = (time.time(),)
 
 	conn = create_connection(database)
+	c = conn.cursor()
 	sqlCommand = '''INSERT INTO jobs(start_time) VALUES(?)'''
 
 	try:
 		with conn:
-			conn.execute(sqlCommand, start_time)
+			c.execute(sqlCommand, start_time)
 	except sqlite3.Error as e:
 		print(e)
 
@@ -99,11 +100,12 @@ def update_jobs_record():
 	finish_time = (time.time(),)
 
 	conn = create_connection(database)
+	c = conn.cursor()
 	sqlCommand = '''UPDATE jobs SET finish_time = ? WHERE id = (SELECT MAX(id) FROM jobs)'''
 
 	try:
 		with conn:
-			conn.execute(sqlCommand, finish_time)
+			c.execute(sqlCommand, finish_time)
 	except sqlite3.Error as e:
 		print(e)
 
@@ -112,14 +114,15 @@ def add_updates_record(cpu_record, IO_record, memory_record):
 	update_time = (time.time(),)
 
 	conn = create_connection(database)
+	c = conn.cursor()
 	sqlCommand = '''INSERT INTO updates(job_id, update_time) VALUES((SELECT MAX(id) FROM jobs),?)'''
 
 	lastRowId = -1
 
 	try:
 		with conn:
-			conn.execute(sqlCommand, update_time)
-			lastRowId = conn.lastrowid
+			c.execute(sqlCommand, update_time)
+			lastRowId = c.lastrowid
 
 		add_cpu_record(lastRowId, cpu_record)
 		add_IO_record(lastRowId, IO_record)
@@ -128,40 +131,46 @@ def add_updates_record(cpu_record, IO_record, memory_record):
 		print(e)
 
 def add_cpu_record(id, record):
-	record = id + record
+	idTuple = (id,)
+	record = idTuple + record
 
 	conn = create_connection(database)
+	c = conn.cursor()
 	sqlCommand = '''INSERT INTO cpu(id, usage_percentage, num_cores, threads, cpu_time, idle_time) VALUES(?,?,?,?,?,?)'''
 
 	try:
 		with conn:
-			conn.execute(sqlCommand, record)
+			c.execute(sqlCommand, record)
 	except sqlite3.Error as e:
 		print(e)
 
 
 def add_IO_record(id, record):
-	record = id + record
+	idTuple = (id,)
+	record = idTuple + record
 
 	conn = create_connection(database)
+	c = conn.cursor()
 	sqlCommand = '''INSERT INTO IO(id, read_count, write_count, read_bytes, write_bytes) VALUES(?,?,?,?,?)'''
 
 	try:
 		with conn:
-			conn.execute(sqlCommand, record)
+			c.execute(sqlCommand, record)
 	except sqlite3.Error as e:
 		print(e)
 
 
 def add_memory_record(id, record):
-	record = id + record
+	idTuple = (id,)
+	record = idTuple + record
 
 	conn = create_connection(database)
+	c = conn.cursor()
 	sqlCommand = '''INSERT INTO memory(id, memory_usage, page_faults) VALUES(?,?,?)'''
 
 	try:
 		with conn:
-			conn.execute(sqlCommand, record)
+			c.execute(sqlCommand, record)
 	except sqlite3.Error as e:
 		print(e)
 

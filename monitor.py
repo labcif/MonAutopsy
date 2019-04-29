@@ -5,9 +5,6 @@ import psutil, threading, mail_notif, json, datetime, os
 from database import add_cpu_values, createTables
 from graphics import cpuGraph
 from mail_notif import send_notif
-from time import time
-from time import sleep
-import sysconfig
 
             #Not necessary for the time being:
                 #Variables for disk monitorization
@@ -62,7 +59,6 @@ print()
 
 #Threads declarations
 processesThread = None
-chartsThread = None
 reportThread = None
 
 
@@ -156,14 +152,15 @@ def checkProcesses():
         #If there are no remaining processes
         if len(processes) == 0 :
             print("All processes are dead!!!")
-            processesThread.cancel()
+            stopThreads()
             #Notificacao ao admin
 
 
-#CPU, IO and memory charts creation
-def createGraphic():
-	cpuGraph(str(PROCNAME), "cpu_graph")
-
+def stopThreads():
+    if isinstance(processesThread, threading.Timer) is True:
+        processesThread.cancel()
+    if isinstance(reportThread, threading.Timer) is True:
+        reportThread.cancel()
 
 #Periodic report creation
 def periodicReport():
@@ -175,6 +172,10 @@ def periodicReport():
     #Call charts creation and send them in the notifications
     createGraphic()
     send_notif(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], config["notify"]["receiverEmail"], smtp_password)
+
+#CPU, IO and memory charts creation
+def createGraphic():
+    cpuGraph(str(PROCNAME), "cpu_graph")
 
 
 #Upon starting the script will begin the monitorization and period report cicle

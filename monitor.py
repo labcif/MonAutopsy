@@ -128,7 +128,7 @@ def checkProcesses():
         #print("Total page faults: " + str(totalPageFaults))
 
         #Add CPU information to database
-        #TODO: Check affinity and threads for autopsy and photorek and join them (hardcoded for now)
+        #TODO: Check affinity and threads for autopsy and photorec and join them
         #---WAITING FOR DATABASE METHODS---
         #values = (cpuUsage, ..., ..., ..., ..., ...)
         #add_cpu_values(values)

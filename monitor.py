@@ -39,7 +39,7 @@ mainProcess = None
 for proc in psutil.process_iter():
 	if proc.name() in PROCNAME:
 		mainProcess = proc
-if mainProcess == None :
+if mainProcess is None :
 	print("No process named "+str(PROCNAME))
 	exit(2)
 

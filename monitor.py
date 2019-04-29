@@ -18,7 +18,7 @@ with open(os.path.dirname(os.path.abspath(__file__)) + '\\config.json') as f:
 
 #SMTP Password
 smtp_password = input("Enter SMTP password: ")
-check_authentication(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], smtp_password)
+#check_authentication(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], smtp_password)
 
 #Usar 'config' para definir todos os intervalos de valores a monitorizar
 
@@ -29,19 +29,19 @@ print("\n-----------------------\n\nAll processes virtual memory:\n")
 print(psutil.virtual_memory())
 
 #Selected process monitorization
-PROCNAME = "autopsy64.exe"
+PROCNAME = ["autopsy64.exe", "photorec_win.exe"]
+#TODO: Change to autopsy64.exe children
 print("\n-----------------------\n\nProcess: " + str(PROCNAME))
 print("\nCPU PERCENT")
 processes = []
 
 #Check if process(es) exist and get them in an array
 for proc in psutil.process_iter():
-	if proc.name() == PROCNAME:
+	if proc.name() in PROCNAME:
 		processes.append(proc)
 if len(processes) == 0 :
 	print("No process named "+str(PROCNAME))
 	exit(2)
-
 
 #Create database tables
 createTables()

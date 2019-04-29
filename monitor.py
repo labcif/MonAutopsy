@@ -2,9 +2,9 @@
 #threading doc: https://docs.python.org/2/library/threading.html
 import psutil, threading, mail_notif, json, datetime, os
 #from arguments import arguments
-from database import add_cpu_values, createTables
+from database import add_cpu_record, add_IO_record, add_memory_record, createTables
 from graphics import cpuGraph
-from mail_notif import send_notif
+from mail_notif import send_notif, check_authentication
 
             #Not necessary for the time being:
                 #Variables for disk monitorization
@@ -18,7 +18,7 @@ with open(os.path.dirname(os.path.abspath(__file__)) + '\\config.json') as f:
 
 #SMTP Password
 smtp_password = input("Enter SMTP password: ")
-
+check_authentication(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], smtp_password)
 
 #Usar 'config' para definir todos os intervalos de valores a monitorizar
 

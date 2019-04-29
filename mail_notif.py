@@ -81,3 +81,11 @@ def send_notif(SMTPServer, senderEmail, receiverEmail, password):
 	with smtplib.SMTP_SSL(SMTPServer, port, context=context) as server:
 		server.login(senderEmail, password)
 		server.sendmail(senderEmail, receiverEmail, message.as_string())
+
+def check_authentication(SMTPServer, senderEmail, password):
+	with smtplib.SMTP_SSL(SMTPServer, port, context=context) as server:
+		try:
+			server.login(senderEmail, password)
+		except smtplib.SMTPException as e:
+			print(e)
+			exit(2)

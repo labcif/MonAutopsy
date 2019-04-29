@@ -95,11 +95,12 @@ def checkProcesses():
             totalReadBytes += IOCounter.read_bytes
             totalWriteBytes += IOCounter.write_bytes
             
-        #Call the function to insert the new IO record in the database here
-        print("Total read count: " + str(totalReadCount))
-        print("Total write count: " + str(totalWriteCount))
-        print("Total read bytes: " + str(totalReadBytes))
-        print("Total write bytes: " + str(totalWriteBytes))
+        #print("Total read count: " + str(totalReadCount))
+        #print("Total write count: " + str(totalWriteCount))
+        #print("Total read bytes: " + str(totalReadBytes))
+        #print("Total write bytes: " + str(totalWriteBytes))
+
+
 
                         #Not working as expected:
                             #In milliseconds (supposedly, might be in nanoseconds)
@@ -123,9 +124,14 @@ def checkProcesses():
             totalMemoryUsage += memoryInfo.uss
             totalPageFaults += memoryInfo.num_page_faults
 
-        #Call the function to insert the new memory record in the database here
-        print("Total memory usage: " + str(totalMemoryUsage))
-        print("Total page faults: " + str(totalPageFaults))
+        #print("Total memory usage: " + str(totalMemoryUsage))
+        #print("Total page faults: " + str(totalPageFaults))
+
+        #Add CPU information to database
+        #TODO: Check affinity and threads for autopsy and photorek and join them (hardcoded for now)
+        #---WAITING FOR DATABASE METHODS---
+        #values = (cpuUsage, ..., ..., ..., ..., ...)
+        #add_cpu_values(values)
 
         # Send mail if...
         if cpuUsage > int(config["cpu_usage"]["max"], 10) or cpuUsage < int(config["cpu_usage"]["min"], 10) :
@@ -134,13 +140,7 @@ def checkProcesses():
 
         #TODO: Create IO and memory anomaly notification and call it here
 
-        print("Median CPU Usage for " + str(PROCNAME) + " processes = " + str(cpuUsage) + "%")
-
-        #Add CPU information to database
-        #TODO: Check affinity and threads for autopsy and photorek and join them (hardcoded for now)
-        #---WAITING FOR DATABASE METHODS---
-        #values = (cpuUsage, ..., ..., ..., ..., ...)
-        #add_cpu_values(values)
+        #print("Median CPU Usage for " + str(PROCNAME) + " processes = " + str(cpuUsage) + "%")
 
     except psutil.NoSuchProcess:
         for proc in processes:

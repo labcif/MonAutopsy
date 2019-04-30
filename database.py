@@ -216,6 +216,12 @@ def retrieve_latest_cpu_values():
 	except sqlite3.Error as e:
 		print(e)
 
+def retrieve_memory_values_report(id):
+	conn = create_connection(database)
+	#try:
+	#	c = conn.cursor()
+	#	c.execute('''(SELECT * FROM (SELECT * FROM memory WHERE id = (SELECT MAX()))''')
+
 #All memory updates
 def retrieve_memory_values(): 
 	conn = create_connection(database)

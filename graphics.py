@@ -3,7 +3,7 @@ import matplotlib.dates as mdates
 import datetime
 from dateutil import parser
 from matplotlib import style
-from database import retrieve_cpu_values, retrieve_latest_cpu_values, retrieve_memory_values, retrieve_io_values
+from database import retrieve_cpu_values, retrieve_latest_cpu_values, retrieve_memory_values_report, retrieve_io_values
 style.use('fivethirtyeight')
 
 def cpuGraph(process, name):

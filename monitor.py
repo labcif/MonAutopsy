@@ -14,19 +14,13 @@ from mail_notif import send_notif, check_authentication
 #Load JSON File
 with open(os.path.dirname(os.path.abspath(__file__)) + '\\config.json') as f:
     config = json.load(f)
-    #TODO: JSON parameter validation
+    #TODO: Change to ini file type (easier)
 
 #SMTP Password
 smtp_password = input("Enter SMTP password: ")
 #check_authentication(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], smtp_password)
 
 #Usar 'config' para definir todos os intervalos de valores a monitorizar
-
-#All processes
-print("All processes CPU Times:\n")
-print(psutil.cpu_times())
-print("\n-----------------------\n\nAll processes virtual memory:\n")
-print(psutil.virtual_memory())
 
 #Selected process monitorization
 PROCNAME = ["autopsy64.exe"]
@@ -48,16 +42,6 @@ createTables()
 add_jobs_record()
 
 
-#Overall CPU percentage
-cpus_percent = psutil.cpu_percent(percpu=True)
-for _ in range(psutil.cpu_count()):
-    print("%-10s" % cpus_percent.pop(0), end="")
-
-print()
-
-#-----------------------
-
-
 #Threads declarations
 processesThread = None
 reportThread = None
@@ -71,7 +55,6 @@ def checkProcesses():
         processesThread.start()
         
         cpuUsage = 0.0
-        #diskUsage = 0.0
 
         processesCPUTimes = []
         processesCPUAfinnity = set() #Unique values only
@@ -137,28 +120,6 @@ def checkProcesses():
 
         IORecord = (totalReadCount, totalWriteCount, totalReadBytes, totalWriteBytes)
 
-
-        #print("Total read count: " + str(totalReadCount))
-        #print("Total write count: " + str(totalWriteCount))
-        #print("Total read bytes: " + str(totalReadBytes))
-        #print("Total write bytes: " + str(totalWriteBytes))
-
-
-                        #Not working as expected:
-                            #In milliseconds (supposedly, might be in nanoseconds)
-                            #diskIOCounters = psutil.disk_io_counters()
-                            #global previousDiskBusyTime
-
-                            #diskBusyTime = diskIOCounters.read_time + diskIOCounters.write_time
-                            #diskUsage = round((diskBusyTime - previousDiskBusyTime) / 1000 * 100,  5)
-                            #diskBusyTimeDifference = diskBusyTime - previousDiskBusyTime
-                            #previousDiskBusyTime = diskBusyTime
-
-                            #print("Disk usage: " + str(diskUsage) + "%")
-                            #print("DiskBusyTime: " + str(diskBusyTimeDifference))
-
-        #Getting 1 record of memory, which is the sum of the memory fields of the processes
-
         totalMemoryUsage = 0
         totalPageFaults = 0
 
@@ -167,9 +128,6 @@ def checkProcesses():
             totalPageFaults += memoryInfo.num_page_faults
 
         memoryRecord = (totalMemoryUsage, totalPageFaults)
-
-        #print("Total memory usage: " + str(totalMemoryUsage))
-        #print("Total page faults: " + str(totalPageFaults))
 
         #Add all the records to the database
 
@@ -181,8 +139,6 @@ def checkProcesses():
             print("NOTIFICATION HERE! PLEASE LET ME KNOW VIA EMAIL!")
 
         #TODO: Create IO and memory anomaly notification and call it here
-
-        #print("Median CPU Usage for " + str(PROCNAME) + " processes = " + str(cpuUsage) + "%")
 
     except psutil.NoSuchProcess:
         if not mainProcess.is_running():

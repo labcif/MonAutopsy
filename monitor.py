@@ -1,9 +1,11 @@
 #PSUtil doc: https://psutil.readthedocs.io/en/latest/
 #threading doc: https://docs.python.org/2/library/threading.html
 import psutil, threading, mail_notif, json, datetime, os
+from getpass import getpass
 #from arguments import arguments
 from database import add_jobs_record, update_jobs_record, add_updates_record, createTables
-from graphics import cpuGraph
+from database import retrieve_cpu_values_report, retrieve_memory_values_report, retrieve_IO_values_report
+from graphics import cpuUsageGraph
 from mail_notif import send_notif, check_authentication
 
             #Not necessary for the time being:
@@ -17,7 +19,7 @@ with open(os.path.dirname(os.path.abspath(__file__)) + '\\config.json') as f:
     #TODO: Change to ini file type (easier)
 
 #SMTP Password
-smtp_password = input("Enter SMTP password: ")
+smtp_password = getpass(prompt='Enter SMTP password: ')
 #check_authentication(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], smtp_password)
 
 #Usar 'config' para definir todos os intervalos de valores a monitorizar
@@ -45,6 +47,10 @@ add_jobs_record()
 #Threads declarations
 processesThread = None
 reportThread = None
+
+
+#Database ID
+id = 0
 
 
 #Process(es) monitorization
@@ -170,14 +176,22 @@ def periodicReport():
 
 #CPU, IO and memory charts creation
 def createGraphic():
-    cpuGraph(str(PROCNAME), "cpu_graph")
+    global id
+    cpuData = retrieve_cpu_values_report(id)
+    memoryData = retrieve_memory_values_report(id)
+    ioData = retrieve_IO_values_report(id)
+    cpuUsageGraph("cpu_graph", cpuData)
+    #Verificar se cpuData[len(cpuData) - 1] corresponde ao ultimo id
+    row = cpuData[len(cpuData) - 1]
+    id = int(row[0]) + 1
+
     #TODO: Add IO and memory charts
 
 
 #Upon starting the script will begin the monitorization and period report cicle
 def main():
 	checkProcesses()
-	#periodicReport()
+	periodicReport()
 
 
 #EXECUTION

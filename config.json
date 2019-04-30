@@ -9,11 +9,11 @@
 	},
 	"notify": {
 		"SMTPServer": "smtp.gmail.com",
-		"senderEmail": "MonAutopsy_Notify@gmail.com",
+		"senderEmail": "monautopsy.notify@gmail.com",
 		"receiverEmail": "2160840@my.ipleiria.pt"
 	},
 	"time_interval":{
 		"process": "5",
-		"report": "5"
+		"report": "120"
 	}
 }

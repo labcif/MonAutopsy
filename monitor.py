@@ -5,7 +5,7 @@ from getpass import getpass
 #from arguments import arguments
 from database import add_jobs_record, update_jobs_record, add_updates_record, createTables
 from database import retrieve_cpu_values_report, retrieve_memory_values_report, retrieve_IO_values_report
-from graphics import cpuUsageGraph
+from graphics import cpuUsageGraph, ioGraph, memoryGraph
 from mail_notif import send_notif, check_authentication
 
             #Not necessary for the time being:
@@ -20,7 +20,7 @@ with open(os.path.dirname(os.path.abspath(__file__)) + '\\config.json') as f:
 
 #SMTP Password
 smtp_password = getpass(prompt='Enter SMTP password: ')
-#check_authentication(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], smtp_password)
+check_authentication(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], smtp_password)
 
 #Usar 'config' para definir todos os intervalos de valores a monitorizar
 
@@ -57,7 +57,7 @@ id = 0
 def checkProcesses():
     global processesThread
     try:
-        processesThread = threading.Timer(int(config["time_interval"]["process"]), checkProcesses) #mudar para parametro JSON
+        processesThread = threading.Timer(int(config["time_interval"]["process"]), checkProcesses)
         processesThread.start()
         
         cpuUsage = 0.0
@@ -172,7 +172,7 @@ def periodicReport():
 
     #Call charts creation and send them in the notifications
     createGraphic()
-    send_notif(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], config["notify"]["receiverEmail"], smtp_password)
+    send_notif(config, config["notify"]["SMTPServer"], config["notify"]["senderEmail"], config["notify"]["receiverEmail"], smtp_password)
 
 #CPU, IO and memory charts creation
 def createGraphic():
@@ -181,10 +181,11 @@ def createGraphic():
     memoryData = retrieve_memory_values_report(id)
     ioData = retrieve_IO_values_report(id)
     cpuUsageGraph("cpu_graph", cpuData)
+    ioGraph("io_graph", ioData)
+    memoryGraph("memory_graph", memoryData)
     #Verificar se cpuData[len(cpuData) - 1] corresponde ao ultimo id
     row = cpuData[len(cpuData) - 1]
     id = int(row[0]) + 1
-
     #TODO: Add IO and memory charts
 
 

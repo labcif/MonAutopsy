@@ -83,17 +83,27 @@ def checkProcesses():
         processes.append(mainProcess)
 
         for proc in processes:
-            cpuUsage += proc.cpu_percent() / psutil.cpu_count()
-            cpuUsage = round(cpuUsage, 2)
+            #Try catch in case some process besides main process dies, this way the execution won't stop due to a secondary process
+            try:
+                cpuUsage += proc.cpu_percent() / psutil.cpu_count()
+                cpuUsage = round(cpuUsage, 2)
 
-            totalThreads += proc.num_threads()
+                totalThreads += proc.num_threads()
 
-            processesCPUAfinnity.update(proc.cpu_affinity())
+                processesCPUAfinnity.update(proc.cpu_affinity())
 
-            processesCPUTimes.append(proc.cpu_times())
-            processesIOCounters.append(proc.io_counters())
-            processesMemoryInfo.append(proc.memory_full_info())
-
+                processesCPUTimes.append(proc.cpu_times())
+                processesIOCounters.append(proc.io_counters())
+                processesMemoryInfo.append(proc.memory_full_info())
+            except psutil.NoSuchProcess:
+                if not mainProcess.is_running():
+                    print("All processes are dead!!!")
+                    stopThreads()
+                    update_jobs_record()
+                    print("Something died!")
+            except KeyboardInterrupt:
+                stopThreads()
+                update_jobs_record()
 
 
         #Getting 1 record of cpu, which is the sum of the cpu fields of the processes
@@ -175,18 +185,11 @@ def checkProcesses():
         #print("Median CPU Usage for " + str(PROCNAME) + " processes = " + str(cpuUsage) + "%")
 
     except psutil.NoSuchProcess:
-        for proc in processes:
-
-            #Remove processes not running anymore
-            if not proc.is_running():
-                processes.remove(proc)
-
-        #If there are no remaining processes
-        if len(processes) == 0 :
+        if not mainProcess.is_running():
             print("All processes are dead!!!")
             stopThreads()
             update_jobs_record()
-            #Notificacao ao admin
+            # Notificacao ao admin
     except KeyboardInterrupt:
         stopThreads()
         update_jobs_record()

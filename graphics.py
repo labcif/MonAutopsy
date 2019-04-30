@@ -3,16 +3,15 @@ import matplotlib.dates as mdates
 import datetime
 from dateutil import parser
 from matplotlib import style
-from database import retrieve_cpu_values, retrieve_memory_values_report, retrieve_IO_values
 style.use('fivethirtyeight')
 
-def cpuGraph(process, name):
+def cpuUsageGraph(name, data):
 
-	data = retrieve_cpu_values()
 	times = []
 	cpu_usages = []
 	date = None
 	for row in data:
+		#Rows diferentes, mudar
 		date = parser.parse(row[2])
 		times.append(date)
 		cpu_usages.append(row[1])
@@ -20,7 +19,7 @@ def cpuGraph(process, name):
 	ax = plt.gca()
 	xfmt = mdates.DateFormatter('%H:%M:%S')
 	ax.xaxis.set_major_formatter(xfmt)
-	plt.plot(times, cpu_usages, label=str(process))
+	plt.plot(times, cpu_usages, label="Autopsy")
 	plt.xlabel("Time")
 	plt.ylabel("CPU Usage")
 	plt.title("CPU Usage over time (" + str(datetime.datetime.strftime(date, '%d-%m-%Y')) + ")")
@@ -28,8 +27,7 @@ def cpuGraph(process, name):
 	plt.savefig(name, bbox_inches='tight')
 	plt.cla()
 
-def ioGraph(process, name):
-	data = retrieve_io_values()  # Not working yet
+def ioGraph(process, name, data):
 	times = []
 	cpu_usages = []
 	date = None
@@ -50,8 +48,7 @@ def ioGraph(process, name):
 	plt.cla()
 
 
-def memoryGraph(process, name):
-	data = retrieve_memory_values() #Not working yet
+def memoryGraph(process, name, data):
 	times = []
 	cpu_usages = []
 	date = None

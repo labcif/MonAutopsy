@@ -12,7 +12,7 @@ def createMessage(config):
 
 	html = """<h1 style="text-align: center;"><strong>Periodic Report</strong></h1>
 	<p>&nbsp;</p>
-	<h2><strong>Par&acirc;metros:</strong></h2>
+	<h2><strong>Parameters:</strong></h2>
 	<ul>
 	<li><strong>CPU Usage</strong>:
 	<ul>

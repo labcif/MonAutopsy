@@ -1,24 +1,27 @@
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib.axes import Axes
 from datetime import datetime
 from matplotlib import style
+from psutil import virtual_memory
 import math
 style.use('fivethirtyeight')
 
-def cpuUsageGraph(name, data):
-
+def cpuUsageGraph(name, data, min, max):
 	times = []
 	cpu_usages = []
 	date = None
 	for row in data:
 		date = datetime.fromtimestamp(row[8])
 		times.append(date)
-		cpu_usages.append(math.floor(row[1] * 100))
+		cpu_usages.append(math.floor(row[1]))
 	plt.xticks(rotation=25)
 	ax = plt.gca()
 	xfmt = mdates.DateFormatter('%H:%M:%S')
 	ax.xaxis.set_major_formatter(xfmt)
 	plt.plot(times, cpu_usages, label="Autopsy")
+	plt.axhline(min, label="Minimum CPU Usage", linestyle='--', color='g', linewidth=2)
+	plt.axhline(max, label="Maximum CPU Usage", linestyle='--', color='r', linewidth=2)
 	plt.xlabel("Time")
 	plt.ylabel("CPU Usage (%)")
 	plt.ylim(0, 100)
@@ -43,15 +46,6 @@ def ioGraph(name, data):
 		io_write_bytes.append(int(row[4]) / 1000000)
 	plt.xticks(rotation=25)
 	ax = plt.gca()
-	#if min(io_read_bytes) > min(io_write_bytes):
-	#	plt.ylim(bottom=min(io_write_bytes))
-	#else:
-	#	plt.ylim(bottom=min(io_read_bytes))
-	#
-	#if max(io_read_bytes) > max(io_write_bytes):
-	#	plt.ylim(top=max(io_read_bytes))
-	#else:
-	#	plt.ylim(top=max(io_write_bytes))
 
 	xfmt = mdates.DateFormatter('%H:%M:%S')
 	ax.xaxis.set_major_formatter(xfmt)
@@ -67,8 +61,9 @@ def ioGraph(name, data):
 	plt.cla()
 
 
-def memoryGraph(name, data):
+def memoryGraph(name, data, min, max):
 	#Needs pagefaults
+	totalMemory = int(virtual_memory()[0]) / 1000000
 	times = []
 	mem_usages = []
 	date = None
@@ -81,9 +76,11 @@ def memoryGraph(name, data):
 	xfmt = mdates.DateFormatter('%H:%M:%S')
 	ax.xaxis.set_major_formatter(xfmt)
 	plt.plot(times, mem_usages, label="Autopsy")
+	plt.axhline(min, label="Minimum Memory Usage", linestyle='--', color='g', linewidth=2)
+	plt.axhline(max, label="Maximum Memory Usage", linestyle='--', color='r', linewidth=2)
 	plt.xlabel("Time")
 	plt.ylabel("Memory Usage (MB)")
-	#plt.ylim(min(mem_usages), max(mem_usages))
+	plt.ylim(0, totalMemory)
 	plt.title("Memory Usage over time (" + str(datetime.strftime(date, '%d-%m-%Y')) + ")")
 	plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 	plt.savefig(name, bbox_inches='tight')

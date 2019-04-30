@@ -13,7 +13,7 @@
 		"receiverEmail": "2160840@my.ipleiria.pt"
 	},
 	"time_interval":{
-		"process": "5",
-		"report": "120"
+		"process": "2",
+		"report": "30"
 	}
 }

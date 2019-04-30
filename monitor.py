@@ -70,7 +70,7 @@ def checkProcesses():
 
         processes = mainProcess.children(recursive=True) #Get all processes descendants
         processes.append(mainProcess)
-
+        i=0
         for proc in processes:
             #Try catch in case some process besides main process dies, this way the execution won't stop due to a secondary process
             try:
@@ -183,9 +183,9 @@ def createGraphic():
     cpuData = retrieve_cpu_values_report(id)
     memoryData = retrieve_memory_values_report(id)
     ioData = retrieve_IO_values_report(id)
-    cpuUsageGraph("cpu_graph", cpuData)
+    cpuUsageGraph("cpu_graph", cpuData, int(config["cpu_usage"]["min"]), int(config["cpu_usage"]["max"]))
     ioGraph("io_graph", ioData)
-    memoryGraph("memory_graph", memoryData)
+    memoryGraph("memory_graph", memoryData,int(config["memory"]["min"]), int(config["memory"]["max"]))
     #Verificar se cpuData[len(cpuData) - 1] corresponde ao ultimo id
     row = cpuData[len(cpuData) - 1]
     id = int(row[0]) + 1

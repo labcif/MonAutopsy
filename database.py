@@ -176,7 +176,7 @@ def add_memory_record(id, record):
 
 #-----------RETRIEVING VALUES FROM TABLES--------------
 
-#All combined CPU, IO and memory update
+#All combined CPU, IO and memory updates
 def retrieve_updates(): 
 	conn = create_connection(database)
 
@@ -192,35 +192,55 @@ def retrieve_updates():
 	except sqlite3.Error as e:
 		print(e)
 
+#Certain combined CPU, IO and memory updates, with id >= startId
+def retrieve_updates_report(startId)
+	idTuple = (startId,)
+	conn = create_connection(database)
+
+	try:
+		c = conn.cursor()
+		c.execute('''SELECT * FROM updates 
+					INNER JOIN cpu ON updates.id = cpu.id 
+					INNER JOIN IO ON updates.id = IO.id
+					INNER JOIN memory ON updates.id = memory.id
+					WHERE updates.id >= ?''', idTuple)
+		rows = c.fetchall()
+
+		return rows
+	except sqlite3.Error as e:
+		print(e)
+
 #All CPU updates
 def retrieve_cpu_values(): 
 	conn = create_connection(database)
+
 	try:
 		c = conn.cursor()
-		c.execute('''SELECT * FROM cpu INNER JOIN updates ON memory.id = updates.id ''')
+		c.execute('''SELECT * FROM cpu INNER JOIN updates ON cpu.id = updates.id ''')
 		rows = c.fetchall()
 
 		return rows
 	except sqlite3.Error as e:
 		print(e)
 
-#Certain CPU updates
-def retrieve_latest_cpu_values():
+
+#Certain CPU updates, with id >= startId
+def retrieve_cpu_values_report(startId):
+	idTuple = (startId,)
 	conn = create_connection(database)
+
 	try:
 		c = conn.cursor()
-		c.execute('''SELECT * FROM (SELECT * FROM cpu ORDER BY id DESC LIMIT 10)  ORDER BY id ASC''')
+		c.execute('''SELECT * FROM cpu 
+					INNER JOIN updates 
+					ON cpu.id = updates.id 
+					WHERE cpu.id >= ?''', idTuple)
 		rows = c.fetchall()
 
 		return rows
 	except sqlite3.Error as e:
 		print(e)
 
-def retrieve_memory_values_report(id):
-	conn = create_connection(database)
-	#try:
-	#	c = conn.cursor()
-	#	c.execute('''(SELECT * FROM (SELECT * FROM memory WHERE id = (SELECT MAX()))''')
 
 #All memory updates
 def retrieve_memory_values(): 
@@ -235,15 +255,51 @@ def retrieve_memory_values():
 	except sqlite3.Error as e:
 		print(e)
 
+
+#Certain memory updates, with id >= startId
+def retrieve_memory_values_report(startId):
+	idTuple = (startId,)
+	conn = create_connection(database)
+	
+	try:
+		c = conn.cursor()
+		c.execute('''SELECT * FROM memory 
+					INNER JOIN updates 
+					ON memory.id = updates.id 
+					WHERE memory.id >= ?''', idTuple)
+		rows = c.fetchall()
+
+		return rows
+	except sqlite3.Error as e:
+		print(e)
+
 #All IO updates
 def retrieve_IO_values():
 	conn = create_connection(database)
 
 	try:
 		c = conn.cursor()
-		c.execute('''SELECT * FROM IO INNER JOIN updates ON memory.id = updates.id ''')
+		c.execute('''SELECT * FROM IO INNER JOIN updates ON IO.id = updates.id ''')
 		rows = c.fetchall()
 
 		return rows
 	except sqlite3.Error as e:
 		print(e)
+
+#Certain IO updates, with id >= startId
+def retrieve_IO_values_report(startId):
+	idTuple = (startId,)
+	conn = create_connection(database)
+
+	try:
+		c = conn.cursor()
+		c.execute('''SELECT * FROM IO 
+					INNER JOIN updates 
+					ON IO.id = updates.id 
+					WHERE IO.id >= ?''', idTuple)
+		rows = c.fetchall()
+
+		return rows
+	except sqlite3.Error as e:
+		print(e)
+		

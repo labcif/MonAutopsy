@@ -18,7 +18,7 @@ with open(os.path.dirname(os.path.abspath(__file__)) + '\\config.json') as f:
 
 #SMTP Password
 smtp_password = input("Enter SMTP password: ")
-#check_authentication(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], smtp_password)
+check_authentication(config["notify"]["SMTPServer"], config["notify"]["senderEmail"], smtp_password)
 
 #Usar 'config' para definir todos os intervalos de valores a monitorizar
 
@@ -136,9 +136,12 @@ def checkProcesses():
         # Send mail if...
         if cpuUsage > int(config["cpu_usage"]["max"], 10) or cpuUsage < int(config["cpu_usage"]["min"], 10) :
             #TODO: Create CPU usage anomaly and call it here
-            print("NOTIFICATION HERE! PLEASE LET ME KNOW VIA EMAIL!")
+            print("[CPU USAGE] NOTIFICATION HERE! PLEASE LET ME KNOW VIA EMAIL!")
 
         #TODO: Create IO and memory anomaly notification and call it here
+
+        if totalMemoryUsage > int(config["memory"]["max"], 10) or totalMemoryUsage < int(config["memory"]["min"]) :
+            print("[MEMORY USAGE] NOTIFICATION HERE! PLEASE LET ME KNOW VIA EMAIL!")
 
     except psutil.NoSuchProcess:
         if not mainProcess.is_running():

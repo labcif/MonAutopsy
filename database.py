@@ -193,7 +193,7 @@ def retrieve_updates():
 		print(e)
 
 #Certain combined CPU, IO and memory updates, with id >= startId
-def retrieve_updates_report(startId)
+def retrieve_updates_report(startId):
 	idTuple = (startId,)
 	conn = create_connection(database)
 

@@ -18,3 +18,11 @@ teste.py
 .idea/modules.xml
 .idea/scripts.iml
 __pycache__/arguments.cpython-37.pyc
+modules/database/sqlite3.exe
+modules/database/database.db
+modules/__pycache__/database.cpython-37.pyc
+modules/__pycache__/graphics.cpython-37.pyc
+modules/__pycache__/mail_notif.cpython-37.pyc
+*.png
+*.pyc
+*.xml___jb_tmp___

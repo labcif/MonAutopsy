@@ -1,0 +1,5 @@
+psutil
+matplotlib
+argparse
+pyautoit
+pyautogui

@@ -43,7 +43,7 @@ def createMessage(config):
 	<p>&nbsp;</p>
 	<h2><strong>Program Execution:</strong></h2>
 	<p><img src="cid:status" alt="" width="1920" height="1080" /></p>
-	<p>&nbsp;</p>""".format(config["cpu_usage"]["min"], config["cpu_usage"]["max"], config["memory"]["min"], config["memory"]["max"])
+	<p>&nbsp;</p>""".format(config["CPU USAGE"]["min"], config["CPU USAGE"]["max"], config["MEMORY"]["min"], config["MEMORY"]["max"])
 
 	message = MIMEMultipart("related")
 	message["Subject"] = "Periodic Report"
@@ -73,7 +73,7 @@ def createMessage(config):
 	fp.close()
 
 	#Change when screenshot.py works
-	fp = open("cpu_graph.png", "rb")
+	fp = open("screenshot.png", "rb")
 	msgImage = MIMEImage(fp.read())
 	msgImage.add_header('Content-ID', '<status>')
 	message.attach(msgImage)
@@ -91,6 +91,7 @@ def check_authentication(SMTPServer, senderEmail, password):
 	with smtplib.SMTP_SSL(SMTPServer, port, context=context) as server:
 		try:
 			server.login(senderEmail, password)
+			return True
 		except smtplib.SMTPException as e:
 			print(e)
-			exit(2)
+			return False

@@ -275,11 +275,31 @@ def retrieve_cpu_values_report(startId):
 					FROM updates 
 					WHERE id >= ? AND job_id = ?''', tuppleToFill)
 		rows = c.fetchall()
-
 		return rows
 	except sqlite3.Error as e:
 		print(e)
 
+
+def retrieve_cpu_values_notif():
+    conn = create_connection(database)
+
+    try:
+        c = conn.cursor()
+        c.execute('''SELECT MAX(id) FROM jobs''')
+
+        jobId = (c.fetchone()[0],)
+
+        c.execute('''SELECT cpu_usage_percentage, num_cores, threads, cpu_time, id, job_id, update_time
+                    FROM updates
+                    WHERE job_id = ?
+                    ORDER BY id
+                    DESC limit 10''', jobId)
+
+        rows = c.fetchall()
+
+        return rows
+    except sqlite3.Error as e:
+        print(e)
 
 #All memory updates
 def retrieve_IO_values():
@@ -353,4 +373,26 @@ def retrieve_memory_values_report(startId):
 		return rows
 	except sqlite3.Error as e:
 		print(e)
+
+
+def retrieve_memory_values_notif():
+    conn = create_connection(database)
+
+    try:
+        c = conn.cursor()
+        c.execute('''SELECT MAX(id) FROM jobs''')
+
+        jobId = (c.fetchone()[0],)
+
+        c.execute('''SELECT memory_usage, page_faults, id, job_id, update_time
+                    FROM updates
+                    WHERE job_id = ?
+                    ORDER BY id
+                    DESC limit 10''', jobId)
+
+        rows = c.fetchall()
+
+        return rows
+    except sqlite3.Error as e:
+        print(e)
 		

@@ -75,14 +75,22 @@ if xNumValues > 11:
 #Process(es) monitorization
 def checkProcesses():
     errorOccurred = False
-    cpu_occurrences_min = 0
     cpu_occurrences_max = 0
-    memory_occurrences_min = 0
     memory_occurrences_max = 0
     notif_thread = None
+    cpuTimeClosedProcesses = 0
+    IOReadCountClosedProcesses = 0
+    IOReadBytesClosedProcesses = 0
+    IOWriteCountClosedProcesses = 0
+    IOWriteBytesClosedProcesses = 0
+    pageFaultsClosedProcesses = 0
+    lastProcessesInfo = dict()
 
     while not threads_exit_event.is_set() and not errorOccurred: # Loops while the event flag has not been set
-        print("[checkProcessesThread] The event flag is not set yet, continuing operation")
+        start_timestamp = time.time()
+        update_timeTuple = (round(start_timestamp),)
+        print("[" + time.strftime("%d/%m/%Y - %H:%M:%S", time.gmtime(start_timestamp)) + " - " + str(start_timestamp) + "]" + "[checkProcessesThread] The event flag is not set yet, continuing operation")
+
         cpuUsage = 0.0
 
         processesCPUTimes = []
@@ -90,6 +98,8 @@ def checkProcesses():
         processesIOCounters = []
         processesMemoryInfo = []
         totalThreads = 0
+
+        lastProcessesList = []
 
         #Try catch here in case the mainProcess dies
         try:
@@ -111,9 +121,17 @@ def checkProcesses():
 
                 processesCPUAfinnity.update(proc.cpu_affinity())
 
-                processesCPUTimes.append(proc.cpu_times())
-                processesIOCounters.append(proc.io_counters())
-                processesMemoryInfo.append(proc.memory_full_info())
+                procCPUTimes = proc.cpu_times()
+                procIOCounters = proc.io_counters()
+                procMemoryInfo = proc.memory_full_info()
+                procName = proc.name()
+
+                processesCPUTimes.append(procCPUTimes)
+                processesIOCounters.append(procIOCounters)
+                processesMemoryInfo.append(procMemoryInfo)
+
+                lastProcessesInfo[proc] = (procCPUTimes, procIOCounters, procMemoryInfo, procName)
+
             except psutil.NoSuchProcess:
                 if not mainProcess.is_running():
                     print("All processes are dead!!!")
@@ -124,6 +142,26 @@ def checkProcesses():
 
         if errorOccurred:
             continue
+
+        for lastProc, lastProcInfo in lastProcessesInfo.items():
+            if not lastProc.is_running():
+                print("[checkProcessesThread] Process with PID " + str(lastProc.pid) + " and name '" + lastProcInfo[3] + "' closed from last iteration to the current one.")
+                #cpu_times()
+                cpuTimeClosedProcesses += (lastProcInfo[0].user + lastProcInfo[0].system)
+
+                #io_counters()
+                IOReadCountClosedProcesses += lastProcInfo[1].read_count
+                IOReadBytesClosedProcesses += lastProcInfo[1].read_bytes
+                IOWriteCountClosedProcesses += lastProcInfo[1].write_count
+                IOWriteBytesClosedProcesses += lastProcInfo[1].write_bytes
+
+                #memory_full_info()
+                pageFaultsClosedProcesses += lastProcInfo[2].num_page_faults
+
+                lastProcessesList.append(lastProc)
+
+        for lastProc in lastProcessesList:
+            lastProcessesInfo.pop(lastProc)
 
         #Getting 1 record of cpu, which is the sum of the cpu fields of the processes
 
@@ -136,16 +174,16 @@ def checkProcesses():
             totalUserTime += CPUTimes.user
             totalSystemTime += CPUTimes.system
 
-        totalCPUTime = int(totalUserTime + totalSystemTime)
+        totalCPUTime = round(totalUserTime + totalSystemTime + cpuTimeClosedProcesses)
 
         cpuRecord = (cpuUsage, processesNumCores, totalThreads, totalCPUTime)
 
         #Getting 1 record of IO, which is the sum of the IO fields of the processes
 
-        totalReadCount = 0
-        totalWriteCount = 0
-        totalReadBytes = 0
-        totalWriteBytes = 0
+        totalReadCount = IOReadCountClosedProcesses
+        totalWriteCount = IOWriteCountClosedProcesses
+        totalReadBytes = IOReadBytesClosedProcesses
+        totalWriteBytes = IOWriteBytesClosedProcesses
 
         for IOCounter in processesIOCounters:
             totalReadCount += IOCounter.read_count
@@ -153,11 +191,10 @@ def checkProcesses():
             totalReadBytes += IOCounter.read_bytes
             totalWriteBytes += IOCounter.write_bytes
         
-
         IORecord = (totalReadCount, totalWriteCount, totalReadBytes, totalWriteBytes)
 
         totalMemoryUsage = 0
-        totalPageFaults = 0
+        totalPageFaults = pageFaultsClosedProcesses
 
         for memoryInfo in processesMemoryInfo:
             totalMemoryUsage += memoryInfo.uss
@@ -167,28 +204,14 @@ def checkProcesses():
 
         #Add all the records to the database
 
-        add_updates_record(cpuRecord, IORecord, memoryRecord)
+        add_updates_record(cpuRecord, IORecord, memoryRecord, update_timeTuple)
 
         #Send notifications if...
-        if cpuUsage < int(config["CPU USAGE"]["min"], 10):
-            if cpu_occurrences_min == int(config["NOTIFICATIONS"]["cpu_usage"]):
-                cpu_min_notif_data = retrieve_cpu_values_notif()
-                cpuUsageGraph("cpu_notif_min", cpu_min_notif_data, int(config["CPU USAGE"]["min"]), int(config["CPU USAGE"]["max"]), xNumValues)
-                lastCpuValue = cpu_min_notif_data[-1][0]
-                notif_thread = threading.Thread(target=send_cpu_notif, args=(config, config["SMTP"]["smtp_server"], config["SMTP"]["sender_email"], receivers, smtp_password, lastCpuValue, True))
-                notif_thread.start()
-                print("[CPU USAGE] NOTIFICATION HERE! PLEASE LET ME KNOW VIA EMAIL!")
-                cpu_occurrences_min = 0
-            else:
-                cpu_occurrences_min += 1
-        else:
-            cpu_occurrences_min = 0
-
 
         if cpuUsage > int(config["CPU USAGE"]["max"], 10):
             if cpu_occurrences_max == int(config["NOTIFICATIONS"]["cpu_usage"]):
                 cpu_max_notif_data = retrieve_cpu_values_notif()
-                cpuUsageGraph("cpu_notif_max", cpu_max_notif_data, int(config["CPU USAGE"]["min"]), int(config["CPU USAGE"]["max"]), xNumValues)
+                cpuUsageGraph("cpu_notif_max", cpu_max_notif_data, int(config["CPU USAGE"]["max"]), xNumValues)
                 lastCpuValue = cpu_max_notif_data[-1][0]
                 notif_thread = threading.Thread(target=send_cpu_notif, args=(config, config["SMTP"]["smtp_server"], config["SMTP"]["sender_email"], receivers, smtp_password, lastCpuValue, False))
                 notif_thread.start()
@@ -200,24 +223,10 @@ def checkProcesses():
             cpu_occurrences_max = 0
         #TODO: Create IO anomaly notification and call it here
 
-        if totalMemoryUsage / 1000000 < int(config["MEMORY"]["min"]):
-            if memory_occurrences_min == int(config["NOTIFICATIONS"]["memory_usage"]):
-                memory_min_notif_data = retrieve_memory_values_notif()
-                memoryUsageGraph("memory_notif_min", memory_min_notif_data, int(config["MEMORY"]["min"]), int(config["MEMORY"]["max"]), xNumValues)
-                lastMemoryValue = int(memory_min_notif_data[-1][0]) / 1000000
-                notif_thread = threading.Thread(target=send_memory_notif, args=(config, config["SMTP"]["smtp_server"], config["SMTP"]["sender_email"], receivers, smtp_password, lastMemoryValue, True))
-                notif_thread.start()
-                print("[MEMORY USAGE] NOTIFICATION HERE! PLEASE LET ME KNOW VIA EMAIL!")
-                memory_occurrences_min = 0
-            else:
-                memory_occurrences_min += 1
-        else:
-            memory_occurrences_min = 0
-
         if totalMemoryUsage / 1000000 > int(config["MEMORY"]["max"]):
             if memory_occurrences_max == int(config["NOTIFICATIONS"]["memory_usage"]):
                 memory_max_notif_data = retrieve_memory_values_notif()
-                memoryUsageGraph("memory_notif_max", memory_max_notif_data, int(config["MEMORY"]["min"]),int(config["MEMORY"]["max"]), xNumValues)
+                memoryUsageGraph("memory_notif_max", memory_max_notif_data, int(config["MEMORY"]["max"]), xNumValues)
                 lastMemoryValue = int(memory_max_notif_data[-1][0]) / 1000000
                 notif_thread = threading.Thread(target=send_memory_notif, args=(config, config["SMTP"]["smtp_server"], config["SMTP"]["sender_email"], receivers, smtp_password, lastMemoryValue, False))
                 notif_thread.start()
@@ -228,8 +237,12 @@ def checkProcesses():
         else:
             memory_occurrences_max = 0
 
+        finish_timestamp = time.time()
+        waiting_time = float(config["TIME INTERVAL"]["process"]) - (finish_timestamp - start_timestamp)
+
         # The thread will get blocked here unless the event flag is already set, and will break if it set at any time during the timeout
-        threads_exit_event.wait(timeout=float(config["TIME INTERVAL"]["process"]))
+        if waiting_time > 0:
+            threads_exit_event.wait(timeout=waiting_time)
 
     if not errorOccurred:
         print("[checkProcessesThread] Event flag has been set")
@@ -249,12 +262,17 @@ def periodicReport():
     #Database ID
     id = 0
 
+    waiting_time = float(config["TIME INTERVAL"]["report"])
+
     #Define and start cycle
     while not threads_exit_event.is_set(): # Loops while the event flag has not been set
         # The thread will get blocked here unless the event flag is already set, and will break if it set at any time during the timeout
-        threads_exit_event.wait(timeout=float(config["TIME INTERVAL"]["report"]))
+        threads_exit_event.wait(timeout=waiting_time)
+
+        start_timestamp = time.time()
 
         if not threads_exit_event.is_set(): # Thread could be unblocked in the above line because the event flag has actually been set, not because the time has run out
+            
             print("[reportThread] The event flag is not set yet, continuing operation")
 
             #Call charts creation and send them in the notifications
@@ -263,6 +281,10 @@ def periodicReport():
             notif_thread = threading.Thread(target=send_report, args=(config, config["SMTP"]["smtp_server"], config["SMTP"]["sender_email"], receivers, smtp_password))
             notif_thread.start()
             notif_thread_list.append(notif_thread)
+
+        finish_timestamp = time.time()
+        waiting_time = float(config["TIME INTERVAL"]["report"]) - (finish_timestamp - start_timestamp)
+        
 
     print("[reportThread] Event flag has been set, powering off")
 
@@ -274,15 +296,15 @@ def createGraphic(id):
     cpuData = retrieve_cpu_values_report(id)
     memoryData = retrieve_memory_values_report(id)
     ioData = retrieve_IO_values_report(id)
-    cpuUsageGraph("cpu_usage", cpuData, int(config["CPU USAGE"]["min"]), int(config["CPU USAGE"]["max"]), xNumValues)
+    cpuUsageGraph("cpu_usage", cpuData, int(config["CPU USAGE"]["max"]), xNumValues)
     cpuCoresGraph("cpu_cores", cpuData, xNumValues)
     cpuThreadsGraph("cpu_threads", cpuData, xNumValues)
     cpuTimeGraph("cpu_time", cpuData, xNumValues)
-    ioGraph("io", ioData, xNumValues)
-    memoryUsageGraph("memory_usage", memoryData,int(config["MEMORY"]["min"]), int(config["MEMORY"]["max"]), xNumValues)
+    ioGraph("io", ioData)
+    memoryUsageGraph("memory_usage", memoryData,int(config["MEMORY"]["max"]), xNumValues)
     #Verificar se cpuData[len(cpuData) - 1] corresponde ao ultimo id
     row = cpuData[len(cpuData) - 1]
-    id = int(row[4]) + 1
+    id = int(row[4])
     return id
 
 def terminateReadLogFileThread(readLogFileThread):
@@ -350,6 +372,9 @@ def readLogFile():
         # If it reaches EOF, it returns an empty string; set the ongoing_job flag if there was a startIngestJob declaration and no finishIngestJob one
         elif log_line == "" and has_job_started and not ongoing_job_event.is_set(): 
             ongoing_job_event.set()
+
+        if log_line == "":
+            readLogFileThread_exit_event.wait(1)
     
     print("[readLogFileThread] Event flag has been set, powering off")
 
@@ -465,7 +490,7 @@ def main():
                 terminateReadLogFileThread(readLogFileThread)
 
         print("[MainThread] Goodbye")
-        sendErrorMail(config["SMTP"]["smtp_server"], config["SMTP"]["sender_email"], receivers, smtp_password)
+        #sendErrorMail(config["SMTP"]["smtp_server"], config["SMTP"]["sender_email"], receivers, smtp_password)
 
 #EXECUTION
 if __name__ == '__main__':

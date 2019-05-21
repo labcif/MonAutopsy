@@ -1,18 +1,20 @@
 import sqlite3, os, time
+
 dirname = os.path.dirname(os.path.abspath(__file__)).replace("\modules", "")
 databaseDir = dirname + "\\database"
 database = dirname + "\\database\\database.db"
-#------------DATABASE/TABLES CREATION------------
-def createTables():
 
-	sql_create_jobs_table = '''CREATE TABLE IF NOT EXISTS jobs
+
+# ------------DATABASE/TABLES CREATION------------
+def createTables():
+    sql_create_jobs_table = '''CREATE TABLE IF NOT EXISTS jobs
 							(
 								id INTEGER PRIMARY KEY AUTOINCREMENT,
 								start_time INTEGER NOT NULL,
 								finish_time INTEGER
 							)'''
 
-	sql_create_updates_table = '''CREATE TABLE IF NOT EXISTS updates
+    sql_create_updates_table = '''CREATE TABLE IF NOT EXISTS updates
 							(
 								id INTEGER NOT NULL,
 								job_id INTEGER NOT NULL,
@@ -31,140 +33,152 @@ def createTables():
 								PRIMARY KEY(id, job_id)
 							)'''
 
-	#sql_create_cpu_table = ''' CREATE TABLE IF NOT EXISTS cpu
-	#						(
-	#							id INTEGER PRIMARY KEY,
-	#							usage_percentage REAL NOT NULL,
-	#							num_cores INTEGER NOT NULL,
-	#							threads INTEGER NOT NULL,
-	#							cpu_time INTEGER NOT NULL,
-	#							idle_time INTEGER NOT NULL,
-	#							FOREIGN KEY(id) REFERENCES updates(id)
-	#						)'''
+    # sql_create_cpu_table = ''' CREATE TABLE IF NOT EXISTS cpu
+    #						(
+    #							id INTEGER PRIMARY KEY,
+    #							usage_percentage REAL NOT NULL,
+    #							num_cores INTEGER NOT NULL,
+    #							threads INTEGER NOT NULL,
+    #							cpu_time INTEGER NOT NULL,
+    #							idle_time INTEGER NOT NULL,
+    #							FOREIGN KEY(id) REFERENCES updates(id)
+    #						)'''
 
-	#sql_create_IO_table = '''CREATE TABLE IF NOT EXISTS IO
-	#						(
-	#							id INTEGER PRIMARY KEY,
-	#							read_count INTEGER NOT NULL,
-	#							write_count INTEGER NOT NULL,
-	#							read_bytes INTEGER NOT NULL,
-	#							write_bytes INTEGER NOT NULL,
-	#							FOREIGN KEY(id) REFERENCES updates(id)
-	#						)'''
+    # sql_create_IO_table = '''CREATE TABLE IF NOT EXISTS IO
+    #						(
+    #							id INTEGER PRIMARY KEY,
+    #							read_count INTEGER NOT NULL,
+    #							write_count INTEGER NOT NULL,
+    #							read_bytes INTEGER NOT NULL,
+    #							write_bytes INTEGER NOT NULL,
+    #							FOREIGN KEY(id) REFERENCES updates(id)
+    #						)'''
 
-	#sql_create_memory_table = '''CREATE TABLE IF NOT EXISTS memory
-	#						(
-	#							id INTEGER PRIMARY KEY,
-	#							memory_usage INTEGER NOT NULL,
-	#							page_faults INTEGER NOT NULL,
-	#							FOREIGN KEY(id) REFERENCES updates(id)
-	#						)'''
+    # sql_create_memory_table = '''CREATE TABLE IF NOT EXISTS memory
+    #						(
+    #							id INTEGER PRIMARY KEY,
+    #							memory_usage INTEGER NOT NULL,
+    #							page_faults INTEGER NOT NULL,
+    #							FOREIGN KEY(id) REFERENCES updates(id)
+    #						)'''
 
-	conn = create_connection(database)
-	if conn is not None:
-		create_table(conn, sql_create_jobs_table)
-		create_table(conn, sql_create_updates_table)
-		#create_table(conn, sql_create_cpu_table)
-		#create_table(conn, sql_create_IO_table)
-		#create_table(conn, sql_create_memory_table)
-	else:
-		print("Error! cannot create a database connection")
+    conn = create_connection(database)
+    if conn is not None:
+        create_table(conn, sql_create_jobs_table)
+        create_table(conn, sql_create_updates_table)
+    # create_table(conn, sql_create_cpu_table)
+    # create_table(conn, sql_create_IO_table)
+    # create_table(conn, sql_create_memory_table)
+    else:
+        print("Error! cannot create a database connection")
 
 
 def create_connection(db_file):
-	try:
-		if os.path.isdir(databaseDir) is not True:
-			os.mkdir(databaseDir)
-		conn = sqlite3.connect(db_file)
-		return conn
-	except sqlite3.Error as e:
-		print(e)
+    try:
+        if os.path.isdir(databaseDir) is not True:
+            os.mkdir(databaseDir)
+        conn = sqlite3.connect(db_file)
+        return conn
+    except sqlite3.Error as e:
+        print(e)
 
-	return None
+    return None
+
 
 def create_table(conn, create_table_sql):
     try:
         c = conn.cursor()
         c.execute(create_table_sql)
+        c.close()
+        conn.close()
     except sqlite3.Error as e:
         print(e)
 
-#-------------------------------ADD AND RETRIEVE VALUES FROM DATABASE--------------------------------
 
-#ADDING VALUES TO TABLES
+# -------------------------------ADD AND RETRIEVE VALUES FROM DATABASE--------------------------------
+
+# ADDING VALUES TO TABLES
 def add_jobs_record():
-	start_time = (int(time.time()),)
+    start_time = (round(time.time()),)
 
-	conn = create_connection(database)
-	c = conn.cursor()
-	sqlCommand = '''INSERT INTO jobs(start_time) VALUES(?)'''
+    conn = create_connection(database)
+    c = conn.cursor()
+    sqlCommand = '''INSERT INTO jobs(start_time) VALUES(?)'''
 
-	try:
-		with conn:
-			c.execute(sqlCommand, start_time)
-	except sqlite3.Error as e:
-		print(e)
+    try:
+        with conn:
+            c.execute(sqlCommand, start_time)
+    except sqlite3.Error as e:
+        print(e)
+    finally:
+        c.close()
+        conn.close()
 
 
 def update_jobs_record():
-	finish_time = (int(time.time()),)
+    finish_time = (round(time.time()),)
 
-	conn = create_connection(database)
-	c = conn.cursor()
-	sqlCommand = '''UPDATE jobs SET finish_time = ? WHERE id = (SELECT MAX(id) FROM jobs)'''
+    conn = create_connection(database)
+    c = conn.cursor()
+    sqlCommand = '''UPDATE jobs SET finish_time = ? WHERE id = (SELECT MAX(id) FROM jobs)'''
 
-	try:
-		with conn:
-			c.execute(sqlCommand, finish_time)
-	except sqlite3.Error as e:
-		print(e)
+    try:
+        with conn:
+            c.execute(sqlCommand, finish_time)
+    except sqlite3.Error as e:
+        print(e)
+    finally:
+        c.close()
+        conn.close()
 
 
-def add_updates_record(cpu_record, IO_record, memory_record):
-	update_timeTuple = (int(time.time()),)
+def add_updates_record(cpu_record, IO_record, memory_record, update_timeTuple):
+    conn = create_connection(database)
+    c = conn.cursor()
 
-	conn = create_connection(database)
-	c = conn.cursor()
+    sqlCommand = '''SELECT MAX(id) FROM jobs'''
 
-	sqlCommand = '''SELECT MAX(id) FROM jobs'''
+    # lastRowId = -1
 
-	#lastRowId = -1
+    try:
+        with conn:
+            c.execute(sqlCommand)
 
-	try:
-		with conn:
-			c.execute(sqlCommand)
+            job_idTuple = (c.fetchone()[0],)
 
-			job_idTuple = (c.fetchone()[0],)
-
-			sqlCommand = '''SELECT MAX(id) FROM updates 
+            sqlCommand = '''SELECT MAX(id) FROM updates 
 								WHERE job_id = ?'''
 
-			c.execute(sqlCommand, job_idTuple)
+            c.execute(sqlCommand, job_idTuple)
 
-			highestIdRow = c.fetchone()
-			nextIdTuple = None
+            highestIdRow = c.fetchone()
+            nextIdTuple = None
 
-			if highestIdRow[0] is None:
-				nextIdTuple = (1,)
-			else:
-				#print(len(highestIdRow))
-				#print(highestIdRow[0])
-				nextIdTuple = (highestIdRow[0] + 1,) 
+            if highestIdRow[0] is None:
+                nextIdTuple = (1,)
+            else:
+                # print(len(highestIdRow))
+                # print(highestIdRow[0])
+                nextIdTuple = (highestIdRow[0] + 1,)
 
-			sqlCommand = '''INSERT INTO updates(id, job_id, update_time, cpu_usage_percentage, num_cores, threads, cpu_time, 
+            sqlCommand = '''INSERT INTO updates(id, job_id, update_time, cpu_usage_percentage, num_cores, threads, cpu_time, 
 							read_count, write_count, read_bytes, write_bytes, memory_usage, page_faults) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)'''
 
-			tupleToFill = nextIdTuple + job_idTuple + update_timeTuple + cpu_record + IO_record + memory_record
+            tupleToFill = nextIdTuple + job_idTuple + update_timeTuple + cpu_record + IO_record + memory_record
 
-			c.execute(sqlCommand, tupleToFill)
+            c.execute(sqlCommand, tupleToFill)
 
-		#add_cpu_record(lastRowId, cpu_record)
-		#add_IO_record(lastRowId, IO_record)
-		#add_memory_record(lastRowId, memory_record)
-	except sqlite3.Error as e:
-		print(e)
+    # add_cpu_record(lastRowId, cpu_record)
+    # add_IO_record(lastRowId, IO_record)
+    # add_memory_record(lastRowId, memory_record)
+    except sqlite3.Error as e:
+        print(e)
+    finally:
+        c.close()
+        conn.close()
 
-#def add_cpu_record(id, record):
+
+# def add_cpu_record(id, record):
 #	idTuple = (id,)
 #	record = idTuple + record
 #
@@ -179,7 +193,7 @@ def add_updates_record(cpu_record, IO_record, memory_record):
 #		print(e)
 
 
-#def add_IO_record(id, record):
+# def add_IO_record(id, record):
 #	idTuple = (id,)
 #	record = idTuple + record
 #
@@ -194,7 +208,7 @@ def add_updates_record(cpu_record, IO_record, memory_record):
 #		print(e)
 
 
-#def add_memory_record(id, record):
+# def add_memory_record(id, record):
 #	idTuple = (id,)
 #	record = idTuple + record
 #
@@ -208,76 +222,86 @@ def add_updates_record(cpu_record, IO_record, memory_record):
 #	except sqlite3.Error as e:
 #		print(e)
 
-#-----------RETRIEVING VALUES FROM TABLES--------------
+# -----------RETRIEVING VALUES FROM TABLES--------------
 
-#All combined CPU, IO and memory updates
-def retrieve_updates(): 
-	conn = create_connection(database)
+# All combined CPU, IO and memory updates
+def retrieve_updates():
+    conn = create_connection(database)
 
-	try:
-		c = conn.cursor()
-		c.execute('''SELECT * FROM updates''')
-		rows = c.fetchall()
+    try:
+        c = conn.cursor()
+        c.execute('''SELECT * FROM updates''')
+        rows = c.fetchall()
+        c.close()
+        conn.close()
+        return rows
+    except sqlite3.Error as e:
+        print(e)
 
-		return rows
-	except sqlite3.Error as e:
-		print(e)
 
-#Certain combined CPU, IO and memory updates, with id >= startId
+# Certain combined CPU, IO and memory updates, with id >= startId
 def retrieve_updates_report(startId):
-	idTuple = (startId,)
-	conn = create_connection(database)
+    idTuple = (startId,)
+    conn = create_connection(database)
 
-	try:
-		c = conn.cursor()
-		c.execute('''SELECT MAX(id) FROM jobs''')
+    try:
+        c = conn.cursor()
+        c.execute('''SELECT MAX(id) FROM jobs''')
 
-		job_idTuple = (c.fetchone()[0],)
+        job_idTuple = (c.fetchone()[0],)
 
-		tuppleToFill = idTuple + job_idTuple
+        tuppleToFill = idTuple + job_idTuple
 
-		c.execute('''SELECT * FROM updates 
+        c.execute('''SELECT * FROM updates 
 					WHERE id >= ? AND job_id = ?''', tuppleToFill)
-		rows = c.fetchall()
+        rows = c.fetchall()
+        c.close()
+        conn.close()
 
-		return rows
-	except sqlite3.Error as e:
-		print(e)
-
-#All CPU updates
-def retrieve_cpu_values(): 
-	conn = create_connection(database)
-
-	try:
-		c = conn.cursor()
-		c.execute('''SELECT cpu_usage_percentage, num_cores, threads, cpu_time, id, job_id, update_time FROM updates''')
-		rows = c.fetchall()
-
-		return rows
-	except sqlite3.Error as e:
-		print(e)
+        return rows
+    except sqlite3.Error as e:
+        print(e)
 
 
-#Certain CPU updates, with id >= startId
+# All CPU updates
+def retrieve_cpu_values():
+    conn = create_connection(database)
+
+    try:
+        c = conn.cursor()
+        c.execute('''SELECT cpu_usage_percentage, num_cores, threads, cpu_time, id, job_id, update_time FROM updates''')
+        rows = c.fetchall()
+        c.close()
+        conn.close()
+
+        return rows
+    except sqlite3.Error as e:
+        print(e)
+
+
+# Certain CPU updates, with id >= startId
 def retrieve_cpu_values_report(startId):
-	idTuple = (startId,)
-	conn = create_connection(database)
+    idTuple = (startId,)
+    conn = create_connection(database)
 
-	try:
-		c = conn.cursor()
-		c.execute('''SELECT MAX(id) FROM jobs''')
+    try:
+        c = conn.cursor()
+        c.execute('''SELECT MAX(id) FROM jobs''')
 
-		job_idTuple = (c.fetchone()[0],)
+        job_idTuple = (c.fetchone()[0],)
 
-		tuppleToFill = idTuple + job_idTuple
-		
-		c.execute('''SELECT cpu_usage_percentage, num_cores, threads, cpu_time, id, job_id, update_time
+        tuppleToFill = idTuple + job_idTuple
+
+        c.execute('''SELECT cpu_usage_percentage, num_cores, threads, cpu_time, id, job_id, update_time
 					FROM updates 
 					WHERE id >= ? AND job_id = ?''', tuppleToFill)
-		rows = c.fetchall()
-		return rows
-	except sqlite3.Error as e:
-		print(e)
+        rows = c.fetchall()
+        c.close()
+        conn.close()
+
+        return rows
+    except sqlite3.Error as e:
+        print(e)
 
 
 def retrieve_cpu_values_notif():
@@ -294,85 +318,97 @@ def retrieve_cpu_values_notif():
                     WHERE job_id = ?
                     ORDER BY id
                     DESC limit 10''', jobId)
-
         rows = c.fetchall()
+        c.close()
+        conn.close()
 
         return rows
     except sqlite3.Error as e:
         print(e)
 
-#All memory updates
+
+# All memory updates
 def retrieve_IO_values():
-	conn = create_connection(database)
+    conn = create_connection(database)
 
-	try:
-		c = conn.cursor()
-		c.execute('''SELECT read_count, write_count, read_bytes, write_bytes, id, job_id, update_time
+    try:
+        c = conn.cursor()
+        c.execute('''SELECT read_count, write_count, read_bytes, write_bytes, id, job_id, update_time
 					FROM updates''')
-		rows = c.fetchall()
+        rows = c.fetchall()
+        c.close()
+        conn.close()
 
-		return rows
-	except sqlite3.Error as e:
-		print(e)
+        return rows
+    except sqlite3.Error as e:
+        print(e)
 
 
-#Certain memory updates, with id >= startId
+# Certain memory updates, with id >= startId
 def retrieve_IO_values_report(startId):
-	idTuple = (startId,)
-	conn = create_connection(database)
-	
-	try:
-		c = conn.cursor()
-		c.execute('''SELECT MAX(id) FROM jobs''')
+    idTuple = (startId,)
+    conn = create_connection(database)
 
-		job_idTuple = (c.fetchone()[0],)
+    try:
+        c = conn.cursor()
+        c.execute('''SELECT MAX(id) FROM jobs''')
 
-		tuppleToFill = idTuple + job_idTuple
+        job_idTuple = (c.fetchone()[0],)
 
-		c.execute('''SELECT read_count, write_count, read_bytes, write_bytes, id, job_id, update_time 
+        tuppleToFill = idTuple + job_idTuple
+
+        c.execute('''SELECT read_count, write_count, read_bytes, write_bytes, id, job_id, update_time 
 					FROM updates 
 					WHERE id >= ? AND job_id = ?''', tuppleToFill)
-		rows = c.fetchall()
+        rows = c.fetchall()
+        c.close()
+        conn.close()
 
-		return rows
-	except sqlite3.Error as e:
-		print(e)
+        return rows
+    except sqlite3.Error as e:
+        print(e)
 
-#All IO updates
+
+# All IO updates
 def retrieve_memory_values():
-	conn = create_connection(database)
+    conn = create_connection(database)
 
-	try:
-		c = conn.cursor()
-		c.execute('''SELECT memory_usage, page_faults, id, job_id, update_time
+    try:
+        c = conn.cursor()
+        c.execute('''SELECT memory_usage, page_faults, id, job_id, update_time
 					FROM updates''')
-		rows = c.fetchall()
+        rows = c.fetchall()
+        c.close()
+        conn.close()
 
-		return rows
-	except sqlite3.Error as e:
-		print(e)
+        return rows
+    except sqlite3.Error as e:
+        print(e)
 
-#Certain IO updates, with id >= startId
+
+# Certain IO updates, with id >= startId
 def retrieve_memory_values_report(startId):
-	idTuple = (startId,)
-	conn = create_connection(database)
+    idTuple = (startId,)
+    conn = create_connection(database)
 
-	try:
-		c = conn.cursor()
-		c.execute('''SELECT MAX(id) FROM jobs''')
+    try:
+        c = conn.cursor()
+        c.execute('''SELECT MAX(id) FROM jobs''')
 
-		job_idTuple = (c.fetchone()[0],)
+        job_idTuple = (c.fetchone()[0],)
 
-		tuppleToFill = idTuple + job_idTuple
+        tuppleToFill = idTuple + job_idTuple
 
-		c.execute('''SELECT memory_usage, page_faults, id, job_id, update_time
+        c.execute('''SELECT memory_usage, page_faults, id, job_id, update_time
 					FROM updates 
 					WHERE id >= ? AND job_id = ?''', tuppleToFill)
-		rows = c.fetchall()
+        rows = c.fetchall()
+        c.close()
+        conn.close()
 
-		return rows
-	except sqlite3.Error as e:
-		print(e)
+        return rows
+    except sqlite3.Error as e:
+        print(e)
 
 
 def retrieve_memory_values_notif():
@@ -391,8 +427,10 @@ def retrieve_memory_values_notif():
                     DESC limit 10''', jobId)
 
         rows = c.fetchall()
+        c.close()
+        conn.close()
 
         return rows
+
     except sqlite3.Error as e:
         print(e)
-		

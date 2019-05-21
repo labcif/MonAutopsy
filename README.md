@@ -1,4 +1,8 @@
-﻿# Requirements
+# TODO
+Explicar que o PC nao pode ir para lockscreen senao a parte de screenshot nao funciona.
+Ter atencao ao numero de emails enviados pois o SMTP server pode ter um limite diario (500 para o gmail)
+
+# Requirements
 MonAutopsy requires [Python 3](https://www.python.org/downloads/) to run.
 
 [pip](https://pip.pypa.io/en/stable/) is also required to install all the dependencies. (pip is already installed if you are using Python 2 >=2.7.9 or Python 3 >=3.4)

@@ -1,13 +1,11 @@
-import ctypes
-import pyautogui
-import autoit
+import psutil, autoit, time, pyautogui, ctypes
 
 #Only Windows
 GetWindowText = ctypes.windll.user32.GetWindowTextW
 GetWindowTextLength = ctypes.windll.user32.GetWindowTextLengthW
 IsWindowVisible = ctypes.windll.user32.IsWindowVisible
 wantedWindow = None
-autopsyProcessId = None
+autopsyProcessId = psutil.Process()
 window_process_id = ctypes.c_ulong()
 
 def foreach_window(hwnd, lParam):
@@ -18,14 +16,19 @@ def foreach_window(hwnd, lParam):
         GetWindowText(hwnd, buff, length + 1)
         if "autopsy" in str(buff.value).lower():
             ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(window_process_id))
-            if window_process_id.value == autopsyProcessId:
+            possibleAutopsyProcess = psutil.Process(window_process_id.value)
+            if possibleAutopsyProcess.pid == autopsyProcessId.pid: #or "java" in possibleAutopsyProcess.name():
                 wantedWindow = buff.value
+            else:
+                 for children in autopsyProcessId.children(recursive=True):
+                     if children.pid == possibleAutopsyProcess.pid:
+                         wantedWindow = buff.value
     return True
 
 def screenshotAutopsy(id):
     global wantedWindow
     global autopsyProcessId
-    autopsyProcessId = id
+    autopsyProcessId = psutil.Process(id)
     EnumWindows = ctypes.windll.user32.EnumWindows
     EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.POINTER(ctypes.c_int), ctypes.POINTER(ctypes.c_int))
 
@@ -35,10 +38,10 @@ def screenshotAutopsy(id):
     else:
         autoit.win_activate(wantedWindow)
         autoit.win_set_state(wantedWindow, flag=autoit.properties.SW_MAXIMIZE)
-        pyautogui.screenshot("autopsy.png")
-        autoit.win_set_state(wantedWindow, flag=autoit.properties.SW_MINIMIZE)
-
-
-
-#if __name__ == "__main__":
-#    screenshotAutopsy()
+        autoit.send("!{h}", 0)
+        autoit.send("{DOWN}")
+        autoit.send("{DOWN}")
+        autoit.send("{ENTER}")
+        time.sleep(0.5)
+        pyautogui.screenshot("miscellaneous/autopsy.png")
+        autoit.send("{ESC}")

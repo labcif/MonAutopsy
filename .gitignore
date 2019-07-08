@@ -29,3 +29,4 @@ modules/__pycache__/mail_notif.cpython-37.pyc
 database/sqlite3.exe
 *.ini
 test.py
+test_freedisk.py
